@@ -14,3 +14,7 @@ crishim:
 .PHONY: clean
 clean:
 	rm -rf ${BUILD_DIR}/*
+
+.PHONY: test
+test:
+	cd ./device-scheduler/device; go test; cd ../../kubeinterface; go test

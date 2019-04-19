@@ -4,10 +4,10 @@ import (
 	"regexp"
 
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
+	"github.com/Microsoft/KubeDevice-API/pkg/resource"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	"github.com/Microsoft/KubeDevice/device-scheduler/grpalloc/resource"
+	"github.com/Microsoft/KubeDevice-API/pkg/utils"
 	"github.com/Microsoft/KubeDevice/device-scheduler/grpalloc/scorer"
-	"github.com/Microsoft/KubeDevice/utils"
 	"github.com/golang/glog"
 )
 

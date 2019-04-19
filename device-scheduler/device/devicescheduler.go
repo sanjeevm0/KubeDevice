@@ -5,6 +5,7 @@ import (
 
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
+	"github.com/Microsoft/KubeDevice-API/pkg/utils"
 	"github.com/golang/glog"
 )
 
@@ -20,7 +21,10 @@ type DevicesScheduler struct {
 }
 
 // essentially a static variable
-var DeviceScheduler = &DevicesScheduler{}
+var DeviceScheduler = &DevicesScheduler{
+	score:    make(map[string]map[string]float64),
+	maxScore: make(map[string]float64),
+}
 
 func (ds *DevicesScheduler) AddDevice(device sctypes.DeviceScheduler) {
 	usingGroupScheduler := device.UsingGroupScheduler()
@@ -93,10 +97,12 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 	var totalReasons []sctypes.PredicateFailureReason
 	for _, d := range ds.Devices {
 		fit, reasons, score := d.PodFitsDevice(nodeInfo, podInfo, fillAllocateFrom)
-		// early terminate? - but score will not be correct then
+		//fmt.Printf("I: %v Score: %v\n", i, score)
+		// could early terminate - but score will not be correct then
 		totalScore += score
 		totalFit = totalFit && fit
 		totalReasons = append(totalReasons, reasons...)
+		utils.AssignMap(ds.score, []string{podInfo.Name, nodeInfo.Name}, 0.0)
 		if totalFit {
 			ds.score[podInfo.Name][nodeInfo.Name] = totalScore
 			if totalScore > ds.maxScore[podInfo.Name] {
@@ -111,10 +117,31 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 
 // priority - returns number between 0 and 1 (1 for node with maximum score)
 func (ds *DevicesScheduler) PodPriority(podInfo *types.PodInfo, nodeInfo *types.NodeInfo) float64 {
-	if ds.maxScore[podInfo.Name] != 0.0 {
-		return ds.score[podInfo.Name][nodeInfo.Name] / ds.maxScore[podInfo.Name]
+	maxScore, ok := ds.maxScore[podInfo.Name]
+	if !ok {
+		glog.Errorf("Score not found")
+		return 0.0
+	}
+	score, ok := ds.score[podInfo.Name][nodeInfo.Name]
+	if !ok {
+		glog.Errorf("Score not found")
+		return 0.0
+	}
+	if maxScore != 0.0 {
+		return score / maxScore
 	}
 	return 0.0
+}
+
+func (ds *DevicesScheduler) RemovePodFromScore(podInfo *types.PodInfo) {
+	_, ok := ds.score[podInfo.Name]
+	if ok {
+		delete(ds.score, podInfo.Name)
+	}
+	_, ok = ds.maxScore[podInfo.Name]
+	if ok {
+		delete(ds.maxScore, podInfo.Name)
+	}
 }
 
 // allocate devices & write into annotations
@@ -125,6 +152,7 @@ func (ds *DevicesScheduler) PodAllocate(podInfo *types.PodInfo, nodeInfo *types.
 			return err
 		}
 	}
+	ds.RemovePodFromScore(podInfo)
 	return nil
 }
 

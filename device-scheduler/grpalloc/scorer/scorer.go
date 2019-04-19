@@ -4,7 +4,7 @@ import (
 	"math"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	resourcefn "github.com/Microsoft/KubeDevice/device-scheduler/grpalloc/resource"
+	resourcefn "github.com/Microsoft/KubeDevice-API/pkg/resource"
 )
 
 // LeftoverScoreFunc provides default scoring function

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	"github.com/Microsoft/KubeDevice/utils"
+	"github.com/Microsoft/KubeDevice-API/pkg/utils"
 	kubev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,53 +17,65 @@ func rq(i int64) resource.Quantity {
 	return *resource.NewQuantity(i, resource.DecimalSI)
 }
 
-func compareContainer(cont0 *types.ContainerInfo, cont1 *types.ContainerInfo) {
+func compareContainer(cont0 *types.ContainerInfo, cont1 *types.ContainerInfo) bool {
 	if true {
 		if !reflect.DeepEqual(cont0.KubeRequests, cont1.KubeRequests) {
 			fmt.Printf("KubeReqs don't match\n0:\n%v\n1:\n%v\n", cont0.KubeRequests, cont1.KubeRequests)
+			return false
 		}
 		if !reflect.DeepEqual(cont0.Requests, cont1.Requests) {
 			fmt.Printf("Reqs don't match\n0:\n%v\n1:\n%v\n", cont0.Requests, cont1.Requests)
+			return false
 		}
 		if !reflect.DeepEqual(cont0.DevRequests, cont1.DevRequests) {
 			fmt.Printf("DevReqs don't match\n0:\n%v\n1:\n%v\n", cont0.DevRequests, cont1.DevRequests)
+			return false
 		}
 		if !reflect.DeepEqual(cont0.AllocateFrom, cont1.AllocateFrom) {
 			fmt.Printf("AllocateFrom don't match\n0:\n%v\n1:\n%v\n", cont0.AllocateFrom, cont1.AllocateFrom)
+			return false
 		}
 		if !reflect.DeepEqual(cont0.Scorer, cont1.Scorer) {
 			fmt.Printf("Scorer don't match\n0:\n%v\n1:\n%v\n", cont0.Scorer, cont1.Scorer)
+			return false
 		}
 	}
+	return true
 }
 
-func compareContainers(conts0 map[string]types.ContainerInfo, conts1 map[string]types.ContainerInfo) {
+func compareContainers(conts0 map[string]types.ContainerInfo, conts1 map[string]types.ContainerInfo) bool {
+	allSame := true
 	for contName0, cont0 := range conts0 {
 		cont1, ok := conts1[contName0]
 		if !ok {
 			fmt.Printf("1 does not have container %s\n", contName0)
+			allSame = false
 		} else {
 			fmt.Printf("Compare container %s\n", contName0)
-			compareContainer(&cont0, &cont1)
+			allSame = allSame && compareContainer(&cont0, &cont1)
 		}
 	}
 	for contName1, _ := range conts1 {
 		_, ok := conts0[contName1]
 		if !ok {
 			fmt.Printf("0 does not have container %s\n", contName1)
+			allSame = false
 		}
 	}
+	return allSame
 }
 
-func comparePod(pod0 *types.PodInfo, pod1 *types.PodInfo) {
+func comparePod(pod0 *types.PodInfo, pod1 *types.PodInfo) bool {
+	allSame := true
 	if pod0.Name != pod1.Name {
 		fmt.Printf("Name does not match %s %s\n", pod0.Name, pod1.Name)
 	}
 	if pod0.NodeName != pod1.NodeName {
 		fmt.Printf("Nodename does not match %s %s\n", pod0.NodeName, pod1.NodeName)
 	}
-	compareContainers(pod0.InitContainers, pod1.InitContainers)
-	compareContainers(pod0.RunningContainers, pod1.RunningContainers)
+	allSame = allSame && compareContainers(pod0.InitContainers, pod1.InitContainers)
+	allSame = allSame && compareContainers(pod0.RunningContainers, pod1.RunningContainers)
+	return allSame
 }
 
 func TestConvert(t *testing.T) {
@@ -103,16 +115,16 @@ func TestConvert(t *testing.T) {
 
 	// test pod conversion
 	init0 := types.ContainerInfo{
-		Requests: types.ResourceList{"alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
+		Requests: types.ResourceList{"resource/group/gpu/0/cards": 1, "resource/group/gpu/0/memory": 100000},
 	}
 	run0 := types.ContainerInfo{
-		Requests:     types.ResourceList{"alpha/grpresource/gpu/A/cards": 4},
-		AllocateFrom: types.ResourceLocation{"alpha/grpresource/gpu/0/cards": "CARD1"},
-		DevRequests:  types.ResourceList{"alpha/grpresource/gpugrp1/A/gpu/0/cards": 90},
+		Requests:     types.ResourceList{"resource/group/gpu/A/cards": 4},
+		AllocateFrom: types.ResourceLocation{"resource/group/gpu/0/cards": "CARD1"},
+		DevRequests:  types.ResourceList{"resource/group/gpugrp1/A/gpu/0/cards": 90},
 	}
 	run1 := types.ContainerInfo{
-		Requests: types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
-		Scorer:   types.ResourceScorer{"alpha/grpresource/gpu/A/cards": 10},
+		Requests: types.ResourceList{"resource/group/gpu/A/cards": 6},
+		Scorer:   types.ResourceScorer{"resource/group/gpu/A/cards": 10},
 	}
 	pod0 := types.PodInfo{
 		NodeName:          "NodeB",
@@ -126,13 +138,13 @@ func TestConvert(t *testing.T) {
 			Annotations: map[string]string{
 				"ABCD": "EFGH",
 				"pod.alpha/DeviceInformation": string(jsonStr),
-				// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/cards": "1",
-				// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/memory": "100000",
-				// "PodInfo/RunningContainer/Run0/Requests/alpha/grpresource/gpu/A/cards": "4",
-				// "PodInfo/RunningContainer/Run0/AllocateFrom/alpha/grpresource/gpu/0/cards": "CARD1",
-				// "PodInfo/RunningContainer/Run0/DevRequests/alpha/grpresource/gpugrp1/A/gpu/0/cards": "90",
-				// "PodInfo/RunningContainer/Run1/Requests/alpha/grpresource/gpu/A/cards": "6",
-				// "PodInfo/RunningContainer/Run1/Scorer/alpha/grpresource/gpu/A/cards": "10",
+				// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/cards": "1",
+				// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/memory": "100000",
+				// "PodInfo/RunningContainer/Run0/Requests/resource/group/gpu/A/cards": "4",
+				// "PodInfo/RunningContainer/Run0/AllocateFrom/resource/group/gpu/0/cards": "CARD1",
+				// "PodInfo/RunningContainer/Run0/DevRequests/resource/group/gpugrp1/A/gpu/0/cards": "90",
+				// "PodInfo/RunningContainer/Run1/Requests/resource/group/gpu/A/cards": "6",
+				// "PodInfo/RunningContainer/Run1/Scorer/resource/group/gpu/A/cards": "10",
 				// "PodInfo/ValidForNode": "NodeB",
 			},
 		},
@@ -177,8 +189,8 @@ func TestConvert(t *testing.T) {
 		InitContainers: map[string]types.ContainerInfo{
 			"Init0": {
 				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 100000, "Other": 20},
-				Requests:     types.ResourceList{"alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
-				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/0/cards": 1, "alpha/grpresource/gpu/0/memory": 100000},
+				Requests:     types.ResourceList{"resource/group/gpu/0/cards": 1, "resource/group/gpu/0/memory": 100000},
+				DevRequests:  types.ResourceList{"resource/group/gpu/0/cards": 1, "resource/group/gpu/0/memory": 100000},
 				AllocateFrom: types.ResourceLocation{},
 				Scorer:       types.ResourceScorer{},
 			},
@@ -186,38 +198,38 @@ func TestConvert(t *testing.T) {
 		RunningContainers: map[string]types.ContainerInfo{
 			"Run0": {
 				KubeRequests: types.ResourceList{"CPU": 8, "Memory": 200000},
-				Requests:     types.ResourceList{"alpha/grpresource/gpu/A/cards": 4},
-				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/A/cards": 4},
+				Requests:     types.ResourceList{"resource/group/gpu/A/cards": 4},
+				DevRequests:  types.ResourceList{"resource/group/gpu/A/cards": 4},
 				AllocateFrom: types.ResourceLocation{},
 				Scorer:       types.ResourceScorer{},
 			},
 			"Run1": {
 				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 300000, "alpha.kubernetes.io/nvidia-gpu": 2},
-				Requests:     types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
-				DevRequests:  types.ResourceList{"alpha/grpresource/gpu/A/cards": 6},
+				Requests:     types.ResourceList{"resource/group/gpu/A/cards": 6},
+				DevRequests:  types.ResourceList{"resource/group/gpu/A/cards": 6},
 				AllocateFrom: types.ResourceLocation{},
-				Scorer:       types.ResourceScorer{"alpha/grpresource/gpu/A/cards": 10},
+				Scorer:       types.ResourceScorer{"resource/group/gpu/A/cards": 10},
 			},
 		},
 	}
-	if !reflect.DeepEqual(podInfo, expectedPodInfo) {
+	if !comparePod(podInfo, expectedPodInfo) {
+		//comparePod(podInfo, expectedPodInfo)
 		t.Errorf("PodInfo is not what is expected\n expect:\n%+v\n have:\n%+v", expectedPodInfo, podInfo)
-		comparePod(podInfo, expectedPodInfo)
 	}
 
 	// set allocate from and devrequests after translation and allocation
 	contCopy := podInfo.InitContainers["Init0"]
-	contCopy.DevRequests = types.ResourceList{"alpha/grpresource/gpugrp/0/gpu/0/cards": 1, "alpha/grpresource/gpugrp/0/gpu/0/memory": 200000}
+	contCopy.DevRequests = types.ResourceList{"resource/group/gpugrp/0/gpu/0/cards": 1, "resource/group/gpugrp/0/gpu/0/memory": 200000}
 	contCopy.AllocateFrom = types.ResourceLocation{
-		"alpha/grpresource/gpugrp/0/gpu/0/cards":  "alpha/grpresource/gpugrp/A/gpu/12/cards",
-		"alpha/grpresource/gpugrp/0/gpu/0/memory": "alpha/grpresource/gpugrp/A/gpu/12/memory",
+		"resource/group/gpugrp/0/gpu/0/cards":  "resource/group/gpugrp/A/gpu/12/cards",
+		"resource/group/gpugrp/0/gpu/0/memory": "resource/group/gpugrp/A/gpu/12/memory",
 	}
 	podInfo.InitContainers["Init0"] = contCopy
 
 	contCopy = podInfo.RunningContainers["Run0"]
-	contCopy.DevRequests = types.ResourceList{"alpha/grpresource/gpugrp/A/gpu/0/cards": 4}
+	contCopy.DevRequests = types.ResourceList{"resource/group/gpugrp/A/gpu/0/cards": 4}
 	contCopy.AllocateFrom = types.ResourceLocation{
-		"alpha/grpresource/gpugrp/A/gpu/0/cards": "alpha/grpresource/gpugrp/0/gpu/43-21/cards",
+		"resource/group/gpugrp/A/gpu/0/cards": "resource/group/gpugrp/0/gpu/43-21/cards",
 	}
 	podInfo.RunningContainers["Run0"] = contCopy
 
@@ -236,17 +248,17 @@ func TestConvert(t *testing.T) {
 	expectedAnnotations := map[string]string{
 		"ABCD": "EFGH", // existing
 		"pod.alpha/DeviceInformation": string(jsonStr),
-		// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/cards": "1",
-		// "PodInfo/InitContainer/Init0/Requests/alpha/grpresource/gpu/0/memory": "100000",
-		// "PodInfo/RunningContainer/Run0/Requests/alpha/grpresource/gpu/A/cards": "4",
-		// "PodInfo/RunningContainer/Run1/Requests/alpha/grpresource/gpu/A/cards": "6",
-		// "PodInfo/RunningContainer/Run1/Scorer/alpha/grpresource/gpu/A/cards": "10",
-		// "PodInfo/RunningContainer/Run0/DevRequests/alpha/grpresource/gpugrp/A/gpu/0/cards": "4",
-		// "PodInfo/RunningContainer/Run0/AllocateFrom/alpha/grpresource/gpugrp/A/gpu/0/cards": "alpha/grpresource/gpugrp/0/gpu/43-21/cards",
-		// "PodInfo/InitContainer/Init0/DevRequests/alpha/grpresource/gpugrp/0/gpu/0/cards": "1",
-		// "PodInfo/InitContainer/Init0/DevRequests/alpha/grpresource/gpugrp/0/gpu/0/memory": "200000",
-		// "PodInfo/InitContainer/Init0/AllocateFrom/alpha/grpresource/gpugrp/0/gpu/0/cards": "alpha/grpresource/gpugrp/A/gpu/12/cards",
-		// "PodInfo/InitContainer/Init0/AllocateFrom/alpha/grpresource/gpugrp/0/gpu/0/memory": "alpha/grpresource/gpugrp/A/gpu/12/memory",
+		// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/cards": "1",
+		// "PodInfo/InitContainer/Init0/Requests/resource/group/gpu/0/memory": "100000",
+		// "PodInfo/RunningContainer/Run0/Requests/resource/group/gpu/A/cards": "4",
+		// "PodInfo/RunningContainer/Run1/Requests/resource/group/gpu/A/cards": "6",
+		// "PodInfo/RunningContainer/Run1/Scorer/resource/group/gpu/A/cards": "10",
+		// "PodInfo/RunningContainer/Run0/DevRequests/resource/group/gpugrp/A/gpu/0/cards": "4",
+		// "PodInfo/RunningContainer/Run0/AllocateFrom/resource/group/gpugrp/A/gpu/0/cards": "resource/group/gpugrp/0/gpu/43-21/cards",
+		// "PodInfo/InitContainer/Init0/DevRequests/resource/group/gpugrp/0/gpu/0/cards": "1",
+		// "PodInfo/InitContainer/Init0/DevRequests/resource/group/gpugrp/0/gpu/0/memory": "200000",
+		// "PodInfo/InitContainer/Init0/AllocateFrom/resource/group/gpugrp/0/gpu/0/cards": "resource/group/gpugrp/A/gpu/12/cards",
+		// "PodInfo/InitContainer/Init0/AllocateFrom/resource/group/gpugrp/0/gpu/0/memory": "resource/group/gpugrp/A/gpu/12/memory",
 		// "PodInfo/ValidForNode": "NodeNewD",
 	}
 	if !reflect.DeepEqual(kubePod.ObjectMeta.Annotations, expectedAnnotations) {
