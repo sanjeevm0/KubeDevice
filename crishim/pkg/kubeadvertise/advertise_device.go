@@ -5,10 +5,12 @@ import (
 	"net"
 	"time"
 
+	"github.com/Microsoft/KubeDevice-API/pkg/types"
 	"github.com/Microsoft/KubeDevice/crishim/pkg/device"
 	"github.com/Microsoft/KubeDevice/kubeinterface"
-	"github.com/Microsoft/KubeDevice-API/pkg/types"
 
+	kubev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	clientset "k8s.io/client-go/kubernetes"
@@ -55,6 +57,13 @@ func (da *DeviceAdvertiser) patchResources() error {
 	da.DevMgr.UpdateNodeInfo(nodeInfo)
 	// write node info into annotations
 	kubeinterface.NodeInfoToAnnotation(&newNode.ObjectMeta, nodeInfo)
+	// write native extended resources being advertised for use by default scheduler
+	for key, val := range nodeInfo.KubeCap {
+		newNode.Status.Capacity[kubev1.ResourceName(key)] = *resource.NewQuantity(val, resource.DecimalSI)
+	}
+	for key, val := range nodeInfo.KubeAlloc {
+		newNode.Status.Allocatable[kubev1.ResourceName(key)] = *resource.NewQuantity(val, resource.DecimalSI)
+	}
 
 	// Patch the current status on the API server
 	_, err = kubeinterface.PatchNodeMetadata(da.KubeClient.CoreV1(), da.nodeName, node, newNode)
