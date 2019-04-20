@@ -35,41 +35,27 @@ type dockerExtService struct {
 }
 
 func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types.ContainerInfo, config *runtimeapi.ContainerConfig) error {
-	numAllocateFrom := len(cont.AllocateFrom) // may be zero from old scheduler
-	nvidiaFullpathRE := regexp.MustCompile(`^/dev/nvidia[0-9]*$`)
-	var newDevices []*runtimeapi.Device
-	// first remove any existing nvidia devices
-	numRequestedGPU := 0
-	for _, oldDevice := range config.Devices {
-		isNvidiaDevice := false
-		if oldDevice.HostPath == "/dev/nvidiactl" ||
-			oldDevice.HostPath == "/dev/nvidia-uvm" ||
-			oldDevice.HostPath == "/dev/nvidia-uvm-tools" {
-			isNvidiaDevice = true
-		}
-		if nvidiaFullpathRE.MatchString(oldDevice.HostPath) {
-			isNvidiaDevice = true
-			numRequestedGPU++
-		}
-		if !isNvidiaDevice || 0 == numAllocateFrom {
-			newDevices = append(newDevices, oldDevice)
-		}
-	}
-	if (numAllocateFrom > 0) && (numRequestedGPU > 0) && (numAllocateFrom != numRequestedGPU) {
-		return fmt.Errorf("Number of AllocateFrom is different than number of requested GPUs")
-	}
-	glog.V(3).Infof("Modified devices: %v", newDevices)
 	// allocate devices for container
-	_, devices, err := d.devmgr.AllocateDevices(pod, cont)
+	mounts, devices, err := d.devmgr.AllocateDevices(pod, cont)
 	if err != nil {
 		return err
 	}
 	glog.V(3).Infof("New devices to add: %v", devices)
-	// now add devices returned -- skip volumes for now
 	for _, device := range devices {
-		newDevices = append(newDevices, &runtimeapi.Device{HostPath: device, ContainerPath: device, Permissions: "mrw"})
+		config.Devices = append(config.Devices, &runtimeapi.Device{
+			HostPath:      device, 
+			ContainerPath: device, 
+			Permissions:   "mrw",
+		})
 	}
-	config.Devices = newDevices
+	glog.V(3).Infof("New mounts to add: %v", mounts)
+	for _, volume := range mounts {
+		config.Mounts = append(config.Mounts, &runtimeapi.Mount{
+			HostPath:      volume.HostPath, 
+			ContainerPath: volume.ContainerPath,
+			ReadOnly:      volume.ReadOnly,
+		})
+	}
 	return nil
 }
 
