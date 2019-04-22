@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/Microsoft/KubeDevice/crishim/pkg/device"
@@ -43,17 +42,17 @@ func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types
 	glog.V(3).Infof("New devices to add: %v", devices)
 	for _, device := range devices {
 		config.Devices = append(config.Devices, &runtimeapi.Device{
-			HostPath:      device, 
-			ContainerPath: device, 
+			HostPath:      device,
+			ContainerPath: device,
 			Permissions:   "mrw",
 		})
 	}
 	glog.V(3).Infof("New mounts to add: %v", mounts)
 	for _, volume := range mounts {
 		config.Mounts = append(config.Mounts, &runtimeapi.Mount{
-			HostPath:      volume.HostPath, 
+			HostPath:      volume.HostPath,
 			ContainerPath: volume.ContainerPath,
-			ReadOnly:      volume.ReadOnly,
+			Readonly:      volume.Readonly,
 		})
 	}
 	glog.V(3).Infof("New envs to add: %v", envs)
