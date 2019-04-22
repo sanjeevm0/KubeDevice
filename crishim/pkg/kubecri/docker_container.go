@@ -36,7 +36,7 @@ type dockerExtService struct {
 
 func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types.ContainerInfo, config *runtimeapi.ContainerConfig) error {
 	// allocate devices for container
-	mounts, devices, err := d.devmgr.AllocateDevices(pod, cont)
+	mounts, devices, envs, err := d.devmgr.AllocateDevices(pod, cont)
 	if err != nil {
 		return err
 	}
@@ -54,6 +54,13 @@ func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types
 			HostPath:      volume.HostPath, 
 			ContainerPath: volume.ContainerPath,
 			ReadOnly:      volume.ReadOnly,
+		})
+	}
+	glog.V(3).Infof("New envs to add: %v", envs)
+	for envKey, envVal := range envs {
+		config.Envs = append(config.Envs, &runtimeapi.KeyValue{
+			Key:   envKey,
+			Value: envVal,
 		})
 	}
 	return nil
