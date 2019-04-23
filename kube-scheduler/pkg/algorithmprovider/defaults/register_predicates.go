@@ -128,4 +128,6 @@ func init() {
 			return predicates.NewVolumeBindingPredicate(args.VolumeBinder)
 		},
 	)
+
+	factory.RegisterFitPredicate(predicates.PodFitsDevicePred, predicates.PodFitsDevices)
 }

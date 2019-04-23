@@ -94,4 +94,7 @@ func init() {
 
 	// ImageLocalityPriority prioritizes nodes that have images requested by the pod present.
 	factory.RegisterPriorityFunction2(priorities.ImageLocalityPriority, priorities.ImageLocalityPriorityMap, nil, 1)
+
+	// add device priority with really high weight
+	factory.RegisterPriorityFunction2(priorities.PodDeviceScorePriority, priorities.PodDevicePriority, nil, 10000)
 }

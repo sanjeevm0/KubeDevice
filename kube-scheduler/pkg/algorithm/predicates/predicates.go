@@ -124,6 +124,8 @@ const (
 	AzureDiskVolumeFilterType = "AzureDisk"
 	// CinderVolumeFilterType defines the filter name for CinderVolumeFilter.
 	CinderVolumeFilterType = "Cinder"
+	// PodFitsDevice defines device predicate
+	PodFitsDevicePred = "PodFitsDevice"
 )
 
 // IMPORTANT NOTE for predicate developers:
