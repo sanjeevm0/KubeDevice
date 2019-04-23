@@ -25,6 +25,7 @@ import (
 	internalcache "github.com/Microsoft/KubeDevice/kube-scheduler/pkg/internal/cache"
 	"github.com/Microsoft/KubeDevice/kube-scheduler/pkg/internal/queue"
 	schedulernodeinfo "github.com/Microsoft/KubeDevice/kube-scheduler/pkg/nodeinfo"
+	"k8s.io/api/core/v1"
 )
 
 // CacheDumper writes some information from the scheduler cache and the scheduling queue to the

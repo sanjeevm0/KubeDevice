@@ -2,7 +2,12 @@ package main
 
 import (
 	"github.com/Microsoft/KubeDevice/crishim/pkg/app"
+	"github.com/Microsoft/KubeDevice/logger"
 )
+
+func init() {
+	logger.SetLogger()
+}
 
 func main() {
 	// Add devices here
