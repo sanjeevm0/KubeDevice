@@ -17,8 +17,12 @@ import (
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
 	"github.com/Microsoft/KubeDevice-API/pkg/utils"
 	"github.com/Microsoft/KubeDevice/device-scheduler/grpalloc"
+	"github.com/Microsoft/KubeDevice/kubeinterface"
 	"github.com/Microsoft/KubeGPU/gpuplugintypes"
 	"github.com/Microsoft/KubeGPU/gpuschedulerplugin"
+	kubev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
 
 	"regexp"
@@ -554,5 +558,68 @@ func TestGrpAllocate1(t *testing.T) {
 
 	fmt.Printf("======\nGroup allocate test complete\n========\n")
 
-	klogFlush()
+	klog.Flush()
+}
+
+// test using scheduler for simple scoring (no topology)
+func TestNoTopo(t *testing.T) {
+	kubePod := &kubev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Pod0",
+			Annotations: map[string]string{
+				"ABCD": "EFGH",
+			},
+		},
+		Spec: kubev1.PodSpec{
+			Containers: []kubev1.Container{
+				{
+					Resources: kubev1.ResourceRequirements{
+						Requests: kubev1.ResourceList{
+							kubev1.ResourceName("nvidia.com/gpu"): *resource.NewQuantity(4, resource.DecimalSI),
+						},
+					},
+				},
+			},
+		},
+	}
+	nodeInfo1 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node0",
+		},
+		Status: kubev1.NodeStatus{
+			Capacity: kubev1.ResourceList{
+				kubev1.ResourceName("nvidia.com/gpu"): *resource.NewQuantity(4, resource.DecimalSI),
+			},
+			Allocatable: kubev1.ResourceList{
+				kubev1.ResourceName("nvidia.com/gpu"): *resource.NewQuantity(4, resource.DecimalSI),
+			},
+		},
+	}
+	nodeInfo2 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node1",
+		},
+		Status: kubev1.NodeStatus{
+			Capacity: kubev1.ResourceList{
+				kubev1.ResourceName("nvidia.com/gpu"): *resource.NewQuantity(8, resource.DecimalSI),
+			},
+			Allocatable: kubev1.ResourceList{
+				kubev1.ResourceName("nvidia.com/gpu"): *resource.NewQuantity(8, resource.DecimalSI),
+			},
+		},
+	}
+
+	ds := DeviceScheduler
+	dev := &gpuschedulerplugin.NvidiaGPUScheduler{}
+	ds.AddDevice(dev)
+
+	n1, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo1, nil)
+	n2, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo2, nil)
+	ds.AddNode(nodeInfo1.ObjectMeta.Name, n1)
+	ds.AddNode(nodeInfo2.ObjectMeta.Name, n2)
+
+	p1, _ := kubeinterface.KubePodInfoToPodInfo()
+
+	fits, failures, score := ds.PodFitsResources(kubePod, n1, false)
+	fmt.Printf("Fit: %v Failures: %v Score: %v", fits, failures, score)
 }

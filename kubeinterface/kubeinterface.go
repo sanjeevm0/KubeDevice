@@ -60,6 +60,20 @@ func AnnotationToNodeInfo(meta *metav1.ObjectMeta, existingNodeInfo *types.NodeI
 	return nodeInfo, nil
 }
 
+func KubeNodeToNodeInfo(knode *kubev1.Node, existingNodeInfo *types.NodeInfo) (*types.NodeInfo, error) {
+	nodeInfo, err := AnnotationToNodeInfo(&knode.ObjectMeta, existingNodeInfo)
+	if err != nil {
+		return nodeInfo, err
+	}
+	for k, v := range knode.Status.Capacity {
+		nodeInfo.KubeCap[types.ResourceName(k)] = v.Value()
+	}
+	for k, v := range knode.Status.Allocatable {
+		nodeInfo.KubeAlloc[types.ResourceName(k)] = v.Value()
+	}
+	return nodeInfo, nil
+}
+
 func addContainersToPodInfo(containers map[string]types.ContainerInfo, conts []kubev1.Container, invalidateExistingAnnotations bool) {
 	for _, c := range conts {
 		cont, ok := containers[c.Name]
