@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/Microsoft/KubeDevice/crishim/pkg/device"
@@ -13,7 +12,7 @@ import (
 	"github.com/Microsoft/KubeDevice/kubeinterface"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	"github.com/golang/glog"
+	"k8s.io/klog"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
@@ -40,23 +39,23 @@ func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types
 	if err != nil {
 		return err
 	}
-	glog.V(3).Infof("New devices to add: %v", devices)
+	klog.V(3).Infof("New devices to add: %v", devices)
 	for _, device := range devices {
 		config.Devices = append(config.Devices, &runtimeapi.Device{
-			HostPath:      device, 
-			ContainerPath: device, 
+			HostPath:      device,
+			ContainerPath: device,
 			Permissions:   "mrw",
 		})
 	}
-	glog.V(3).Infof("New mounts to add: %v", mounts)
+	klog.V(3).Infof("New mounts to add: %v", mounts)
 	for _, volume := range mounts {
 		config.Mounts = append(config.Mounts, &runtimeapi.Mount{
-			HostPath:      volume.HostPath, 
+			HostPath:      volume.HostPath,
 			ContainerPath: volume.ContainerPath,
 			ReadOnly:      volume.ReadOnly,
 		})
 	}
-	glog.V(3).Infof("New envs to add: %v", envs)
+	klog.V(3).Infof("New envs to add: %v", envs)
 	for envKey, envVal := range envs {
 		config.Envs = append(config.Envs, &runtimeapi.KeyValue{
 			Key:   envKey,
@@ -73,13 +72,13 @@ func (d *dockerExtService) CreateContainer(ctx context.Context, r *runtimeapi.Cr
 	podName := config.Labels[kubelettypes.KubernetesPodNameLabel]
 	podNameSpace := config.Labels[kubelettypes.KubernetesPodNamespaceLabel]
 	containerName := config.Labels[kubelettypes.KubernetesContainerNameLabel]
-	glog.V(3).Infof("Creating container for pod %v container %v", podName, containerName)
+	klog.V(3).Infof("Creating container for pod %v container %v", podName, containerName)
 	opts := metav1.GetOptions{}
 	pod, err := d.kubeclient.CoreV1().Pods(podNameSpace).Get(podName, opts)
 	if err != nil {
-		glog.Errorf("Retrieving pod %v gives error %v", podName, err)
+		klog.Errorf("Retrieving pod %v gives error %v", podName, err)
 	}
-	glog.V(3).Infof("Pod Spec: %v", pod.Spec)
+	klog.V(3).Infof("Pod Spec: %v", pod.Spec)
 	// convert to local podInfo structure using annotations available
 	podInfo, err := kubeinterface.KubePodInfoToPodInfo(pod, false)
 	if err != nil {
@@ -94,13 +93,13 @@ func (d *dockerExtService) CreateContainer(ctx context.Context, r *runtimeapi.Cr
 }
 
 // func (d *dockerExtService) ExecSync(containerID string, cmd []string, timeout time.Duration) (stdout []byte, stderr []byte, err error) {
-// 	glog.V(5).Infof("Exec sync called %v Cmd %v", containerID, cmd)
+// 	klog.V(5).Infof("Exec sync called %v Cmd %v", containerID, cmd)
 // 	return d.DockerService.ExecSync(containerID, cmd, timeout)
 // }
 
 // func (d *dockerExtService) Exec(request *runtimeapi.ExecRequest) (*runtimeapi.ExecResponse, error) {
 // 	response, err := d.DockerService.Exec(request)
-// 	glog.V(5).Infof("Exec called %v\n Response %v", request, response)
+// 	klog.V(5).Infof("Exec called %v\n Response %v", request, response)
 // 	return response, err
 // }
 
@@ -133,7 +132,7 @@ func DockerExtInit(f *options.KubeletFlags, c *kubeletconfig.KubeletConfiguratio
 		return err
 	}
 	ipName, nodeName, err := kubeadvertise.GetHostName(f)
-	glog.V(2).Infof("Using ipname %v nodeName %v", ipName, nodeName)
+	klog.V(2).Infof("Using ipname %v nodeName %v", ipName, nodeName)
 	if err != nil {
 		return err
 	}
@@ -168,7 +167,7 @@ func DockerExtInit(f *options.KubeletFlags, c *kubeletconfig.KubeletConfiguratio
 		return err
 	}
 
-	glog.V(2).Infof("Starting the GRPC server for the docker CRI shim.")
+	klog.V(2).Infof("Starting the GRPC server for the docker CRI shim.")
 	server := dockerremote.NewDockerServer(f.RemoteRuntimeEndpoint, dsExt)
 	if err := server.Start(); err != nil {
 		return err

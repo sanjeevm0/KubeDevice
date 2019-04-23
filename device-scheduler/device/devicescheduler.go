@@ -6,7 +6,7 @@ import (
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
 	"github.com/Microsoft/KubeDevice-API/pkg/utils"
-	"github.com/golang/glog"
+	"k8s.io/klog"
 )
 
 // var DeviceSchedulerRegistry = map[string]reflect.Type{
@@ -34,11 +34,11 @@ func (ds *DevicesScheduler) AddDevice(device sctypes.DeviceScheduler) {
 		ds.Devices = append(ds.Devices[:len(ds.Devices)-1], device, ds.Devices[len(ds.Devices)-1])
 	}
 	if usingGroupScheduler && !ds.hasGroupScheduler {
-		glog.V(3).Infof("Adding group device for group scheduler")
+		klog.V(3).Infof("Adding group device for group scheduler")
 		ds.Devices = append(ds.Devices, &GrpDevice{})
 		ds.hasGroupScheduler = true
 	}
-	glog.V(3).Infof("Registering device scheduler %s, using group scheduler %v", device, usingGroupScheduler)
+	klog.V(3).Infof("Registering device scheduler %s, using group scheduler %v", device, usingGroupScheduler)
 }
 
 func (ds *DevicesScheduler) AddDevicesSchedulerFromPlugins(pluginNames []string) {
@@ -53,16 +53,16 @@ func (ds *DevicesScheduler) AddDevicesSchedulerFromPlugins(pluginNames []string)
 				if err == nil {
 					device = d
 				} else {
-					glog.Errorf("Schduler Plugin %s creation fails with error %v", pluginName, err)
+					klog.Errorf("Schduler Plugin %s creation fails with error %v", pluginName, err)
 				}
 			} else {
-				glog.Errorf("Scheudler Plugin %s function lookup fails with error %v", pluginName, err)
+				klog.Errorf("Scheudler Plugin %s function lookup fails with error %v", pluginName, err)
 			}
 		} else {
-			glog.Errorf("Scheduler plugin %s open fails with error %v", pluginName, err)
+			klog.Errorf("Scheduler plugin %s open fails with error %v", pluginName, err)
 		}
 		if device == nil {
-			glog.Errorf("Unable to add scheduler plugin %s", pluginName)
+			klog.Errorf("Unable to add scheduler plugin %s", pluginName)
 		} else {
 			ds.AddDevice(device)
 		}
@@ -119,12 +119,12 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 func (ds *DevicesScheduler) PodPriority(podInfo *types.PodInfo, nodeInfo *types.NodeInfo) float64 {
 	maxScore, ok := ds.maxScore[podInfo.Name]
 	if !ok {
-		glog.Errorf("Score not found")
+		klog.Errorf("Score not found")
 		return 0.0
 	}
 	score, ok := ds.score[podInfo.Name][nodeInfo.Name]
 	if !ok {
-		glog.Errorf("Score not found")
+		klog.Errorf("Score not found")
 		return 0.0
 	}
 	if maxScore != 0.0 {

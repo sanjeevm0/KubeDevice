@@ -19,7 +19,7 @@ import (
 	"github.com/Microsoft/KubeDevice/device-scheduler/grpalloc"
 	"github.com/Microsoft/KubeGPU/gpuplugintypes"
 	"github.com/Microsoft/KubeGPU/gpuschedulerplugin"
-	"github.com/golang/glog"
+	"k8s.io/klog"
 
 	"regexp"
 )
@@ -40,7 +40,7 @@ type PodEx struct {
 }
 
 func printContainerAllocation(contName string, cont *types.ContainerInfo) {
-	//glog.V(5).Infoln("Allocated", cont.Resources.Allocated)
+	//klog.V(5).Infoln("Allocated", cont.Resources.Allocated)
 	sortedKeys := utils.SortedStringKeys(cont.DevRequests)
 	for _, resKey := range sortedKeys {
 		resVal := cont.DevRequests[types.ResourceName(resKey)]
@@ -112,7 +112,7 @@ func createNode(name string, res map[string]int64, grpres map[string]int64) (*ty
 	node.Capacity = alloc
 	node.Allocatable = alloc
 
-	glog.V(7).Infoln("AllocatableResource", len(node.Allocatable), node.Allocatable)
+	klog.V(7).Infoln("AllocatableResource", len(node.Allocatable), node.Allocatable)
 
 	return node, nodeArgs{name: name, res: res, grpres: grpres}
 }
@@ -165,7 +165,7 @@ func setExpectedResources(c *cont) {
 func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*types.PodInfo, *PodEx) {
 	pod := types.PodInfo{Name: name, InitContainers: make(map[string]types.ContainerInfo), RunningContainers: make(map[string]types.ContainerInfo)}
 
-	glog.V(2).Infof("Working on pod %s", pod.Name)
+	klog.V(2).Infof("Working on pod %s", pod.Name)
 
 	for index, icont := range iconts {
 		setExpectedResources(&iconts[index])
@@ -178,7 +178,7 @@ func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*ty
 		//pod.InitContainers[index].DevRequests = pod.InitContainers[index].Requests
 		//fmt.Printf("Len: %d\n", len(pod.InitContainers))
 		//fmt.Printf("Req: %v\n", pod.InitContainers[index].Requests)
-		glog.V(7).Infoln(icont.name, pod.InitContainers[icont.name].Requests)
+		klog.V(7).Infoln(icont.name, pod.InitContainers[icont.name].Requests)
 	}
 	for index, rcont := range rconts {
 		setExpectedResources(&rconts[index])
@@ -189,7 +189,7 @@ func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*ty
 		setResource(container.DevRequests, rcont.res, rcont.grpres)
 		setKubeResource(container.KubeRequests, rcont.res)
 		//pod.RunningContainers[index].DevRequests = pod.RunningContainers[index].Requests
-		glog.V(7).Infoln(rcont.name, pod.RunningContainers[rcont.name].Requests)
+		klog.V(7).Infoln(rcont.name, pod.RunningContainers[rcont.name].Requests)
 	}
 
 	podEx := PodEx{podOrig: nil, pod: &pod, icont: iconts, rcont: rconts, expectedScore: expScore}
@@ -554,5 +554,5 @@ func TestGrpAllocate1(t *testing.T) {
 
 	fmt.Printf("======\nGroup allocate test complete\n========\n")
 
-	glog.Flush()
+	klogFlush()
 }

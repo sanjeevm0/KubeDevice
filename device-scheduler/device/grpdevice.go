@@ -6,7 +6,7 @@ import (
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
 	"github.com/Microsoft/KubeDevice/device-scheduler/grpalloc"
-	"github.com/golang/glog"
+	"k8s.io/klog"
 )
 
 type GrpDevice struct {
@@ -19,7 +19,7 @@ func (d *GrpDevice) RemoveNode(nodeName string) {
 }
 
 func (d *GrpDevice) PodFitsDevice(nodeInfo *types.NodeInfo, podInfo *types.PodInfo, fillAllocateFrom bool) (bool, []sctypes.PredicateFailureReason, float64) {
-	glog.V(5).Infof("Running group scheduler on device requests %+v", podInfo)
+	klog.V(5).Infof("Running group scheduler on device requests %+v", podInfo)
 	return grpalloc.PodFitsGroupConstraints(nodeInfo, podInfo, fillAllocateFrom)
 }
 

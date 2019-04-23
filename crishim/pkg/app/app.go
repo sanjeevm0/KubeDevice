@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/golang/glog"
+	"k8s.io/klog"
 
 	"github.com/spf13/pflag"
 
@@ -85,7 +85,7 @@ func RunApp() {
 	var devicePlugins []string
 	devicePluginFiles, err := ioutil.ReadDir(criShimCfg.DevicePath)
 	if err != nil {
-		glog.Errorf("Unable to list devices, skipping adding of devices - error %v", err)
+		klog.Errorf("Unable to list devices, skipping adding of devices - error %v", err)
 	}
 	for _, f := range devicePluginFiles {
 		devicePlugins = append(devicePlugins, path.Join(criShimCfg.DevicePath, f.Name()))

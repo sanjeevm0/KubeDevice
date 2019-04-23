@@ -22,7 +22,6 @@ import (
 
 	"k8s.io/klog"
 
-	"k8s.io/api/core/v1"
 	internalcache "github.com/Microsoft/KubeDevice/kube-scheduler/pkg/internal/cache"
 	"github.com/Microsoft/KubeDevice/kube-scheduler/pkg/internal/queue"
 	schedulernodeinfo "github.com/Microsoft/KubeDevice/kube-scheduler/pkg/nodeinfo"

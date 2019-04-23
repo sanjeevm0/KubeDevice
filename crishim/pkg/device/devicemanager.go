@@ -4,9 +4,9 @@ import (
 	"plugin"
 	"reflect"
 
-	devtypes "github.com/Microsoft/KubeDevice/crishim/pkg/types"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	"github.com/golang/glog"
+	devtypes "github.com/Microsoft/KubeDevice/crishim/pkg/types"
+	"k8s.io/klog"
 )
 
 // DeviceManager manages multiple devices
@@ -56,20 +56,20 @@ func (d *DevicesManager) AddDevicesFromPlugins(pluginNames []string) {
 					device = d
 					err = device.New()
 					if err != nil {
-						glog.Errorf("Device plugin %s New fails with error %v", pluginName, err)
+						klog.Errorf("Device plugin %s New fails with error %v", pluginName, err)
 						device = nil
 					}
 				} else {
-					glog.Errorf("Device plugin %s creation with error %v", pluginName, err)
+					klog.Errorf("Device plugin %s creation with error %v", pluginName, err)
 				}
 			} else {
-				glog.Errorf("Device plugin %s function lookup fails with error %v", pluginName, err)
+				klog.Errorf("Device plugin %s function lookup fails with error %v", pluginName, err)
 			}
 		} else {
-			glog.Errorf("Device plugin %s open fails with error %v", pluginName, err)
+			klog.Errorf("Device plugin %s open fails with error %v", pluginName, err)
 		}
 		if device == nil {
-			glog.Errorf("Unable to add plugin %s", pluginName)
+			klog.Errorf("Unable to add plugin %s", pluginName)
 		} else {
 			d.AddDevice(device)
 		}
@@ -94,7 +94,7 @@ func (d *DevicesManager) UpdateNodeInfo(info *types.NodeInfo) {
 		if d.Operational[i] {
 			err := device.UpdateNodeInfo(info)
 			if err != nil {
-				glog.Errorf("Unable to update device %s encounter error %v", device.GetName(), err)
+				klog.Errorf("Unable to update device %s encounter error %v", device.GetName(), err)
 			}
 		}
 	}

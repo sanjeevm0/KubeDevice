@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	"github.com/golang/glog"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubetypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	v1core "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/klog"
 )
 
 // func escapeStr(origStr string) string {
@@ -35,7 +35,7 @@ func NodeInfoToAnnotation(meta *metav1.ObjectMeta, nodeInfo *types.NodeInfo) err
 		meta.Annotations = make(map[string]string)
 	}
 	meta.Annotations["node.alpha/DeviceInformation"] = string(info)
-	glog.V(4).Infof("NodeInfo: %+v converted to Annotations: %v", nodeInfo, meta.Annotations)
+	klog.V(4).Infof("NodeInfo: %+v converted to Annotations: %v", nodeInfo, meta.Annotations)
 	return nil
 }
 
@@ -56,7 +56,7 @@ func AnnotationToNodeInfo(meta *metav1.ObjectMeta, existingNodeInfo *types.NodeI
 			nodeInfo.Used[usedKey] = usedVal
 		}
 	}
-	glog.V(4).Infof("Annotations: %v converted to NodeInfo: %+v", meta.Annotations, nodeInfo)
+	klog.V(4).Infof("Annotations: %v converted to NodeInfo: %+v", meta.Annotations, nodeInfo)
 	return nodeInfo, nil
 }
 
@@ -104,7 +104,7 @@ func KubePodInfoToPodInfo(kubePodInfo *kubev1.Pod, invalidateExistingAnnotations
 	if invalidateExistingAnnotations {
 		podInfo.NodeName = ""
 	}
-	glog.V(4).Infof("Kubernetes pod: %+v converted to device scheduler podinfo: %v", kubePodInfo, podInfo)
+	klog.V(4).Infof("Kubernetes pod: %+v converted to device scheduler podinfo: %v", kubePodInfo, podInfo)
 	return podInfo, nil
 }
 
@@ -118,7 +118,7 @@ func PodInfoToAnnotation(meta *metav1.ObjectMeta, podInfo *types.PodInfo) error 
 		meta.Annotations = make(map[string]string)
 	}
 	meta.Annotations["pod.alpha/DeviceInformation"] = string(info)
-	glog.V(4).Infof("PodInfo: %+v converted to Annotations: %v", podInfo, meta.Annotations)
+	klog.V(4).Infof("PodInfo: %+v converted to Annotations: %v", podInfo, meta.Annotations)
 	return nil
 }
 
@@ -151,7 +151,7 @@ func PatchNodeMetadata(c v1core.CoreV1Interface, nodeName string, oldNode *kubev
 	updatedNode, err := c.Nodes().Patch(nodeName, kubetypes.StrategicMergePatchType, patchBytes)
 	if err != nil {
 		errStr := fmt.Sprintf("failed to patch metadata %q for node %q: %v", patchBytes, nodeName, err)
-		glog.Errorf(errStr)
+		klog.Errorf(errStr)
 		return nil, fmt.Errorf(errStr)
 	}
 	return updatedNode, nil
@@ -166,7 +166,7 @@ func PatchPodMetadata(c v1core.CoreV1Interface, podName string, oldPod *kubev1.P
 	updatedPod, err := c.Pods(oldPod.ObjectMeta.Namespace).Patch(podName, kubetypes.StrategicMergePatchType, patchBytes)
 	if err != nil {
 		errStr := fmt.Sprintf("failed topatch metadata %q for pod %q: %v", patchBytes, podName, err)
-		glog.Errorf(errStr)
+		klog.Errorf(errStr)
 		return nil, fmt.Errorf(errStr)
 	}
 	return updatedPod, nil
