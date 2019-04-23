@@ -52,7 +52,7 @@ func (d *dockerExtService) modifyContainerConfig(pod *types.PodInfo, cont *types
 		config.Mounts = append(config.Mounts, &runtimeapi.Mount{
 			HostPath:      volume.HostPath,
 			ContainerPath: volume.ContainerPath,
-			ReadOnly:      volume.ReadOnly,
+			Readonly:      volume.Readonly,
 		})
 	}
 	klog.V(3).Infof("New envs to add: %v", envs)

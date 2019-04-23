@@ -2,7 +2,7 @@
 
 # Updates the vendor directory, assumes the following:
 # 1. kubernetes/kubernetes repo is located ../../../../k8s.io/kubernetes
-# 2. KubeDevice-scheduler (the code for merging scheduler changes) is located at ../../KubeDevice-scheduler
+# 2. KubeGPU-scheduler (the code for merging scheduler changes) is located at ../../KubeGPU-scheduler
 import argparse
 import shutil
 import sys
@@ -11,7 +11,7 @@ showOnly = False
 thisPath = os.path.dirname(os.path.realpath(__file__))
 thisBase = os.path.realpath(os.path.join(thisPath, '..'))
 k8s = os.path.realpath(os.path.join(thisPath, '..', '..', '..', '..', 'k8s.io', 'kubernetes'))
-ksched = os.path.realpath(os.path.join(thisPath, '..', '..', 'KubeDevice-scheduler'))
+ksched = os.path.realpath(os.path.join(thisPath, '..', '..', 'KubeGPU-scheduler'))
 extScript = os.path.realpath(os.path.join(thisPath, 'extcopy.py'))
 dirsK8sToSched = {
     os.path.join(k8s, 'pkg', 'scheduler') : os.path.join(ksched, 'pkg', 'scheduler'),

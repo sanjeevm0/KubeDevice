@@ -4,8 +4,8 @@ import (
 	"plugin"
 	"reflect"
 
+	devtypes "github.com/Microsoft/KubeDevice-API/pkg/device"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	devtypes "github.com/Microsoft/KubeDevice/crishim/pkg/types"
 	"k8s.io/klog"
 )
 
@@ -101,22 +101,26 @@ func (d *DevicesManager) UpdateNodeInfo(info *types.NodeInfo) {
 }
 
 // AllocateDevices allocates devices using device manager interface
-func (d *DevicesManager) AllocateDevices(pod *types.PodInfo, cont *types.ContainerInfo) ([]devtypes.Volume, []string, error) {
-	volumes := []devtypes.Volume{}
+func (d *DevicesManager) AllocateDevices(pod *types.PodInfo, cont *types.ContainerInfo) ([]devtypes.Mount, []string, map[string]string, error) {
+	mounts := []devtypes.Mount{}
 	devices := []string{}
+	env := make(map[string]string)
 	var errRet error
 	errRet = nil
 	for i, device := range d.Devices {
 		if d.Operational[i] {
-			volumeD, deviceD, err := device.Allocate(pod, cont)
+			mountD, deviceD, envD, err := device.Allocate(pod, cont)
 			if err == nil {
 				// appending nil to nil is okay
-				volumes = append(volumes, volumeD...)
+				mounts = append(mounts, mountD...)
 				devices = append(devices, deviceD...)
+				for k, v := range envD {
+					env[k] = v
+				}
 			} else {
 				errRet = err
 			}
 		}
 	}
-	return volumes, devices, errRet
+	return mounts, devices, env, errRet
 }
