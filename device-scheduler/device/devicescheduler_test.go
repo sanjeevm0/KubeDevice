@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"math"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -627,8 +628,11 @@ func TestNoTopo(t *testing.T) {
 	modReq := gpuschedulerplugin.TranslateGPUResources(n1.KubeAlloc[gpuplugintypes.ResourceGPU], types.ResourceList{
 		types.DeviceGroupPrefix + "/gpugrp1/A/gpugrp0/B/gpu/GPU0/cards": int64(1),
 	}, n1.Allocatable)
+	if !reflect.DeepEqual(modReq, n1.Allocatable) {
+		t.Errorf("Alloc not same, expect: %v, have: %v", n1.Allocatable, modReq)
+	}
 	n1.Allocatable = modReq
-	fmt.Printf("Node: +%v\n", n1)
+	//fmt.Printf("Node: +%v\n", n1)
 
 	p1, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
 	fmt.Printf("Pod: %+v\n", p1)

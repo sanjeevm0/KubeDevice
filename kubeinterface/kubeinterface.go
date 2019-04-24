@@ -3,6 +3,7 @@ package kubeinterface
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
 	kubev1 "k8s.io/api/core/v1"
@@ -51,7 +52,9 @@ func AnnotationToNodeInfo(meta *metav1.ObjectMeta, existingNodeInfo *types.NodeI
 			}
 		}
 	}
-	nodeInfo.Name = meta.Name
+	if len(strings.TrimSpace(nodeInfo.Name)) == 0 {
+		nodeInfo.Name = meta.Name
+	}
 	if existingNodeInfo != nil && existingNodeInfo.Used != nil {
 		for usedKey, usedVal := range existingNodeInfo.Used {
 			nodeInfo.Used[usedKey] = usedVal

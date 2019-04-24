@@ -2,7 +2,6 @@ package kubeinterface
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -17,67 +16,6 @@ func rq(i int64) resource.Quantity {
 	return *resource.NewQuantity(i, resource.DecimalSI)
 }
 
-func compareContainer(cont0 *types.ContainerInfo, cont1 *types.ContainerInfo) bool {
-	if true {
-		if !reflect.DeepEqual(cont0.KubeRequests, cont1.KubeRequests) {
-			fmt.Printf("KubeReqs don't match\n0:\n%v\n1:\n%v\n", cont0.KubeRequests, cont1.KubeRequests)
-			return false
-		}
-		if !reflect.DeepEqual(cont0.Requests, cont1.Requests) {
-			fmt.Printf("Reqs don't match\n0:\n%v\n1:\n%v\n", cont0.Requests, cont1.Requests)
-			return false
-		}
-		if !reflect.DeepEqual(cont0.DevRequests, cont1.DevRequests) {
-			fmt.Printf("DevReqs don't match\n0:\n%v\n1:\n%v\n", cont0.DevRequests, cont1.DevRequests)
-			return false
-		}
-		if !reflect.DeepEqual(cont0.AllocateFrom, cont1.AllocateFrom) {
-			fmt.Printf("AllocateFrom don't match\n0:\n%v\n1:\n%v\n", cont0.AllocateFrom, cont1.AllocateFrom)
-			return false
-		}
-		if !reflect.DeepEqual(cont0.Scorer, cont1.Scorer) {
-			fmt.Printf("Scorer don't match\n0:\n%v\n1:\n%v\n", cont0.Scorer, cont1.Scorer)
-			return false
-		}
-	}
-	return true
-}
-
-func compareContainers(conts0 map[string]types.ContainerInfo, conts1 map[string]types.ContainerInfo) bool {
-	allSame := true
-	for contName0, cont0 := range conts0 {
-		cont1, ok := conts1[contName0]
-		if !ok {
-			fmt.Printf("1 does not have container %s\n", contName0)
-			allSame = false
-		} else {
-			fmt.Printf("Compare container %s\n", contName0)
-			allSame = allSame && compareContainer(&cont0, &cont1)
-		}
-	}
-	for contName1, _ := range conts1 {
-		_, ok := conts0[contName1]
-		if !ok {
-			fmt.Printf("0 does not have container %s\n", contName1)
-			allSame = false
-		}
-	}
-	return allSame
-}
-
-func comparePod(pod0 *types.PodInfo, pod1 *types.PodInfo) bool {
-	allSame := true
-	if pod0.Name != pod1.Name {
-		fmt.Printf("Name does not match %s %s\n", pod0.Name, pod1.Name)
-	}
-	if pod0.NodeName != pod1.NodeName {
-		fmt.Printf("Nodename does not match %s %s\n", pod0.NodeName, pod1.NodeName)
-	}
-	allSame = allSame && compareContainers(pod0.InitContainers, pod1.InitContainers)
-	allSame = allSame && compareContainers(pod0.RunningContainers, pod1.RunningContainers)
-	return allSame
-}
-
 func TestConvert(t *testing.T) {
 	// test node conversion
 	nodeMeta := &metav1.ObjectMeta{Annotations: map[string]string{"OtherAnnotation": "OtherAnnotationValue"}}
@@ -87,6 +25,8 @@ func TestConvert(t *testing.T) {
 		Allocatable: types.ResourceList{"A": 200, "B": 100},
 		Used:        types.ResourceList{"A": 0, "B": 0},
 		Scorer:      types.ResourceScorer{"A": 4}, // no scorer for resource "B" is provided
+		KubeCap:     make(types.ResourceList),
+		KubeAlloc:   make(types.ResourceList),
 	}
 	NodeInfoToAnnotation(nodeMeta, nodeInfo)
 	jsonNode, _ := json.Marshal(nodeInfo)
@@ -109,8 +49,8 @@ func TestConvert(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error encountered when converting annotation to node info: %v", err)
 	}
-	if !reflect.DeepEqual(nodeInfo, nodeInfoGet) {
-		t.Errorf("Get node is not same, expect: %+v, get: %+v", nodeInfo, nodeInfoGet)
+	if !utils.CompareNode(nodeInfo, nodeInfoGet) {
+		t.Errorf("Get node is not same, expect:\n%+v\n, get:\n%+v\n", nodeInfo, nodeInfoGet)
 	}
 
 	// test pod conversion
@@ -186,6 +126,7 @@ func TestConvert(t *testing.T) {
 	expectedPodInfo := &types.PodInfo{
 		Name:     "Pod0",
 		NodeName: "",
+		Requests: make(types.ResourceList),
 		InitContainers: map[string]types.ContainerInfo{
 			"Init0": {
 				KubeRequests: types.ResourceList{"CPU": 4, "Memory": 100000, "Other": 20},
@@ -212,7 +153,7 @@ func TestConvert(t *testing.T) {
 			},
 		},
 	}
-	if !comparePod(podInfo, expectedPodInfo) {
+	if !utils.ComparePod(podInfo, expectedPodInfo) {
 		//comparePod(podInfo, expectedPodInfo)
 		t.Errorf("PodInfo is not what is expected\n expect:\n%+v\n have:\n%+v", expectedPodInfo, podInfo)
 	}
@@ -273,6 +214,6 @@ func TestConvert(t *testing.T) {
 	}
 	if !reflect.DeepEqual(podInfo, podInfo2) {
 		t.Errorf("Get back Pod info is not correct\nexpect:\n%v\nhave:\n%v", podInfo, podInfo2)
-		comparePod(podInfo, podInfo2)
+		utils.ComparePod(podInfo, podInfo2)
 	}
 }
