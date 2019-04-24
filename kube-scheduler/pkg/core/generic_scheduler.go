@@ -650,7 +650,7 @@ func podFitsOnNode(
 					failedPredicates = append(failedPredicates, reasons...)
 					// if alwaysCheckAllPredicates is false, short circuit all predicates when one predicate fails.
 					if !alwaysCheckAllPredicates {
-						klog.V(5).Infoln("since alwaysCheckAllPredicates has not been set, the predicate " +
+						utils.Logf(5, "since alwaysCheckAllPredicates has not been set, the predicate " +
 							"evaluation is short circuited and there are chances " +
 							"of other predicates failing as well.")
 						break
