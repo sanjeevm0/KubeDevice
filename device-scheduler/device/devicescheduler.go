@@ -1,6 +1,7 @@
 package device
 
 import (
+	"fmt"
 	"plugin"
 
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
@@ -22,8 +23,16 @@ type DevicesScheduler struct {
 
 // essentially a static variable
 var DeviceScheduler = &DevicesScheduler{
-	score:    make(map[string]map[string]float64),
-	maxScore: make(map[string]float64),
+	hasGroupScheduler: false,
+	score:             make(map[string]map[string]float64),
+	maxScore:          make(map[string]float64),
+}
+
+func (ds *DevicesScheduler) RemoveAll() {
+	ds.hasGroupScheduler = false
+	ds.Devices = nil
+	ds.score = make(map[string]map[string]float64)
+	ds.maxScore = make(map[string]float64)
 }
 
 func (ds *DevicesScheduler) AddDevice(device sctypes.DeviceScheduler) {
@@ -71,7 +80,9 @@ func (ds *DevicesScheduler) AddDevicesSchedulerFromPlugins(pluginNames []string)
 
 // AddNode adds node reources to devices scheduler
 func (ds *DevicesScheduler) AddNode(nodeName string, nodeInfo *types.NodeInfo) {
+	fmt.Printf("AddNodeDevices: %v\n", ds.Devices)
 	for _, d := range ds.Devices {
+		utils.Logf(3, "AddNode: %v", d.GetName())
 		d.AddNode(nodeName, nodeInfo)
 	}
 }
@@ -103,15 +114,15 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 		totalScore += score
 		totalFit = totalFit && fit
 		totalReasons = append(totalReasons, reasons...)
-		utils.AssignMap(ds.score, []string{podInfo.Name, nodeInfo.Name}, 0.0)
-		if totalFit {
-			ds.score[podInfo.Name][nodeInfo.Name] = totalScore
-			if totalScore > ds.maxScore[podInfo.Name] {
-				ds.maxScore[podInfo.Name] = totalScore
-			}
-		} else {
-			ds.score[podInfo.Name][nodeInfo.Name] = 0.0
+	}
+	utils.AssignMap(ds.score, []string{podInfo.Name, nodeInfo.Name}, 0.0)
+	if totalFit {
+		ds.score[podInfo.Name][nodeInfo.Name] = totalScore
+		if totalScore > ds.maxScore[podInfo.Name] {
+			ds.maxScore[podInfo.Name] = totalScore
 		}
+	} else {
+		ds.score[podInfo.Name][nodeInfo.Name] = 0.0
 	}
 	return totalFit, totalReasons, totalScore
 }

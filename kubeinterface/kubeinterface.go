@@ -51,6 +51,7 @@ func AnnotationToNodeInfo(meta *metav1.ObjectMeta, existingNodeInfo *types.NodeI
 			}
 		}
 	}
+	nodeInfo.Name = meta.Name
 	if existingNodeInfo != nil && existingNodeInfo.Used != nil {
 		for usedKey, usedVal := range existingNodeInfo.Used {
 			nodeInfo.Used[usedKey] = usedVal

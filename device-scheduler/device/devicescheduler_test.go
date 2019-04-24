@@ -330,10 +330,11 @@ func testPodAllocs(t *testing.T, ds *DevicesScheduler, pod *types.PodInfo, podEx
 func TestGrpAllocate1(t *testing.T) {
 	// create a translator & translate
 	//DeviceScheduler.Devices = append(DeviceScheduler.Devices, &GrpDevice{})
-	dev := &gpuschedulerplugin.NvidiaGPUScheduler{}
-	DeviceScheduler.AddDevice(dev)
-	//DeviceScheduler.CreateAndAddDeviceScheduler("nvidiagpu")
 	ds := DeviceScheduler
+	ds.RemoveAll()
+	dev := &gpuschedulerplugin.NvidiaGPUScheduler{}
+	ds.AddDevice(dev)
+	//DeviceScheduler.CreateAndAddDeviceScheduler("nvidiagpu")
 	//gpusched := &nvidia.NvidiaGPUScheduler{}
 	//ds.Devices = append(ds.Devices, gpusched)
 	//logs.InitLogs()
@@ -564,6 +565,8 @@ func TestGrpAllocate1(t *testing.T) {
 
 // test using scheduler for simple scoring (no topology)
 func TestNoTopo(t *testing.T) {
+	flag.Parse()
+
 	kubePod := &kubev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "Pod0",
@@ -574,6 +577,7 @@ func TestNoTopo(t *testing.T) {
 		Spec: kubev1.PodSpec{
 			Containers: []kubev1.Container{
 				{
+					Name: "Cont0",
 					Resources: kubev1.ResourceRequirements{
 						Requests: kubev1.ResourceList{
 							kubev1.ResourceName("nvidia.com/gpu"): *resource.NewQuantity(4, resource.DecimalSI),
@@ -611,6 +615,7 @@ func TestNoTopo(t *testing.T) {
 	}
 
 	ds := DeviceScheduler
+	ds.RemoveAll()
 	dev := &gpuschedulerplugin.NvidiaGPUScheduler{}
 	ds.AddDevice(dev)
 
@@ -620,10 +625,21 @@ func TestNoTopo(t *testing.T) {
 	ds.AddNode(nodeInfo2.ObjectMeta.Name, n2)
 
 	p1, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
+	fmt.Printf("Pod: %+v\n", p1)
 
 	fits, failures, score := ds.PodFitsResources(p1, n1, false)
 	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
 
-	fits, failures, score = ds.PodFitsResources(p1, n1, false)
+	fits, failures, score = ds.PodFitsResources(p1, n2, false)
 	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
+
+	fmt.Printf("Scores: %+v\n", ds.score)
+
+	pri1 := ds.PodPriority(p1, n1)
+	fmt.Printf("PodPriority1: %v\n", pri1)
+
+	pri2 := ds.PodPriority(p1, n2)
+	fmt.Printf("PodPriority2: %v\n", pri2)
+
+	glog.Flush()
 }
