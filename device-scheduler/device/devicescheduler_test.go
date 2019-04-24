@@ -116,7 +116,7 @@ func createNode(name string, res map[string]int64, grpres map[string]int64) (*ty
 	node.Capacity = alloc
 	node.Allocatable = alloc
 
-	utils.Logf(7, "AllocatableResource", len(node.Allocatable), node.Allocatable)
+	utils.Logf(7, "AllocatableResource %v %v", len(node.Allocatable), node.Allocatable)
 
 	return node, nodeArgs{name: name, res: res, grpres: grpres}
 }
@@ -182,7 +182,7 @@ func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*ty
 		//pod.InitContainers[index].DevRequests = pod.InitContainers[index].Requests
 		//fmt.Printf("Len: %d\n", len(pod.InitContainers))
 		//fmt.Printf("Req: %v\n", pod.InitContainers[index].Requests)
-		utils.Logf(7, icont.name, pod.InitContainers[icont.name].Requests)
+		utils.Logf(7, "%v %v", icont.name, pod.InitContainers[icont.name].Requests)
 	}
 	for index, rcont := range rconts {
 		setExpectedResources(&rconts[index])
@@ -193,7 +193,7 @@ func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*ty
 		setResource(container.DevRequests, rcont.res, rcont.grpres)
 		setKubeResource(container.KubeRequests, rcont.res)
 		//pod.RunningContainers[index].DevRequests = pod.RunningContainers[index].Requests
-		utils.Logf(7, rcont.name, pod.RunningContainers[rcont.name].Requests)
+		utils.Logf(7, "%v %v", rcont.name, pod.RunningContainers[rcont.name].Requests)
 	}
 
 	podEx := PodEx{podOrig: nil, pod: &pod, icont: iconts, rcont: rconts, expectedScore: expScore}
