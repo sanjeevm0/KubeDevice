@@ -20,10 +20,10 @@ import (
 	"github.com/Microsoft/KubeDevice/kubeinterface"
 	"github.com/Microsoft/KubeGPU/gpuplugintypes"
 	"github.com/Microsoft/KubeGPU/gpuschedulerplugin"
+	"github.com/golang/glog"
 	kubev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
 
 	"regexp"
 )
@@ -44,7 +44,7 @@ type PodEx struct {
 }
 
 func printContainerAllocation(contName string, cont *types.ContainerInfo) {
-	//klog.V(5).Infoln("Allocated", cont.Resources.Allocated)
+	//glog.V(5).Infoln("Allocated", cont.Resources.Allocated)
 	sortedKeys := utils.SortedStringKeys(cont.DevRequests)
 	for _, resKey := range sortedKeys {
 		resVal := cont.DevRequests[types.ResourceName(resKey)]
@@ -116,7 +116,7 @@ func createNode(name string, res map[string]int64, grpres map[string]int64) (*ty
 	node.Capacity = alloc
 	node.Allocatable = alloc
 
-	klog.V(7).Infoln("AllocatableResource", len(node.Allocatable), node.Allocatable)
+	glog.V(7).Infoln("AllocatableResource", len(node.Allocatable), node.Allocatable)
 
 	return node, nodeArgs{name: name, res: res, grpres: grpres}
 }
@@ -169,7 +169,7 @@ func setExpectedResources(c *cont) {
 func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*types.PodInfo, *PodEx) {
 	pod := types.PodInfo{Name: name, InitContainers: make(map[string]types.ContainerInfo), RunningContainers: make(map[string]types.ContainerInfo)}
 
-	klog.V(2).Infof("Working on pod %s", pod.Name)
+	glog.V(2).Infof("Working on pod %s", pod.Name)
 
 	for index, icont := range iconts {
 		setExpectedResources(&iconts[index])
@@ -182,7 +182,7 @@ func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*ty
 		//pod.InitContainers[index].DevRequests = pod.InitContainers[index].Requests
 		//fmt.Printf("Len: %d\n", len(pod.InitContainers))
 		//fmt.Printf("Req: %v\n", pod.InitContainers[index].Requests)
-		klog.V(7).Infoln(icont.name, pod.InitContainers[icont.name].Requests)
+		glog.V(7).Infoln(icont.name, pod.InitContainers[icont.name].Requests)
 	}
 	for index, rcont := range rconts {
 		setExpectedResources(&rconts[index])
@@ -193,7 +193,7 @@ func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*ty
 		setResource(container.DevRequests, rcont.res, rcont.grpres)
 		setKubeResource(container.KubeRequests, rcont.res)
 		//pod.RunningContainers[index].DevRequests = pod.RunningContainers[index].Requests
-		klog.V(7).Infoln(rcont.name, pod.RunningContainers[rcont.name].Requests)
+		glog.V(7).Infoln(rcont.name, pod.RunningContainers[rcont.name].Requests)
 	}
 
 	podEx := PodEx{podOrig: nil, pod: &pod, icont: iconts, rcont: rconts, expectedScore: expScore}
@@ -298,9 +298,9 @@ func testPodResourceUsage(t *testing.T, pod *types.PodInfo, nodeInfo *types.Node
 }
 
 func testPodAllocs(t *testing.T, ds *DevicesScheduler, pod *types.PodInfo, podEx *PodEx, nodeInfo *types.NodeInfo, testCnt int) {
-	//fmt.Printf("=====TESTING CNT %d======", testCnt)
-	//fmt.Printf("Node: %v\n", nodeInfo)
-	//fmt.Printf("Pod: %v\n", pod)
+	fmt.Printf("=====TESTING CNT %d======\n", testCnt)
+	fmt.Printf("Node: %v\n", nodeInfo)
+	fmt.Printf("Pod: %v\n", pod)
 	found, _, score := ds.PodFitsResources(pod, nodeInfo, true)
 	if found {
 		if podEx.rcont[0].expectedGrpLoc == nil {
@@ -336,6 +336,7 @@ func TestGrpAllocate1(t *testing.T) {
 	ds := DeviceScheduler
 	//gpusched := &nvidia.NvidiaGPUScheduler{}
 	//ds.Devices = append(ds.Devices, gpusched)
+	//logs.InitLogs()
 
 	testCnt := 0
 	flag.Parse()
@@ -558,7 +559,7 @@ func TestGrpAllocate1(t *testing.T) {
 
 	fmt.Printf("======\nGroup allocate test complete\n========\n")
 
-	klog.Flush()
+	glog.Flush()
 }
 
 // test using scheduler for simple scoring (no topology)
@@ -618,8 +619,11 @@ func TestNoTopo(t *testing.T) {
 	ds.AddNode(nodeInfo1.ObjectMeta.Name, n1)
 	ds.AddNode(nodeInfo2.ObjectMeta.Name, n2)
 
-	p1, _ := kubeinterface.KubePodInfoToPodInfo()
+	p1, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
 
-	fits, failures, score := ds.PodFitsResources(kubePod, n1, false)
+	fits, failures, score := ds.PodFitsResources(p1, n1, false)
+	fmt.Printf("Fit: %v Failures: %v Score: %v", fits, failures, score)
+
+	fits, failures, score = ds.PodFitsResources(p1, n1, false)
 	fmt.Printf("Fit: %v Failures: %v Score: %v", fits, failures, score)
 }

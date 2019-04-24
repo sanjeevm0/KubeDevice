@@ -20,6 +20,7 @@ func (d *GrpDevice) RemoveNode(nodeName string) {
 
 func (d *GrpDevice) PodFitsDevice(nodeInfo *types.NodeInfo, podInfo *types.PodInfo, fillAllocateFrom bool) (bool, []sctypes.PredicateFailureReason, float64) {
 	klog.V(5).Infof("Running group scheduler on device requests %+v", podInfo)
+	fmt.Printf("Run group sched: %v %v %v\n", nodeInfo, podInfo, fillAllocateFrom)
 	return grpalloc.PodFitsGroupConstraints(nodeInfo, podInfo, fillAllocateFrom)
 }
 

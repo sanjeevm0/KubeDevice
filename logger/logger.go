@@ -1,22 +1,27 @@
 package logger
 
 import (
+	"fmt"
+
 	"github.com/Microsoft/KubeDevice-API/pkg/utils"
 	"k8s.io/klog"
 )
 
 func Log(level int, format string, args ...interface{}) {
 	if klog.V(klog.Level(level)) {
-		klog.Infof(format, args...)
+		str := fmt.Sprintf(format, args...)
+		klog.InfoDepth(1, str)
 	}
 }
 
 func Error(format string, args ...interface{}) {
-	klog.Errorf(format, args...)
+	str := fmt.Sprintf(format, args...)
+	klog.ErrorDepth(1, str)
 }
 
 func Warning(format string, args ...interface{}) {
-	klog.Warningf(format, args...)
+	str := fmt.Sprintf(format, args...)
+	klog.WarningDepth(1, str)
 }
 
 func SetLogger() {

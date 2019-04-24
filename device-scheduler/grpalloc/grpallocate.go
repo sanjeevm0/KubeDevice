@@ -203,7 +203,7 @@ func (grp *GrpAllocator) allocateSubGroups(
 		subgrpsElemGrp := subgrpsReq[subgrpsKey]
 		sortedSubgrpsElemGrp := utils.SortedStringKeys(subgrpsElemGrp)
 		for _, subgrpsElemIndex := range sortedSubgrpsElemGrp {
-			klog.V(5).Infof("Allocating subgroup with key %v and index %v", subgrpsKey, subgrpsElemIndex)
+			utils.Logf(5, "Allocating subgroup with key %v and index %v", subgrpsKey, subgrpsElemIndex)
 			subGrp := grp.createSubGroup(allocLocationName, subgrpsReq, subgrpsAllocRes, subgrpsKey, subgrpsElemIndex)
 			foundSubGrp, reasons := subGrp.allocateGroup()
 			if !foundSubGrp {
@@ -286,7 +286,7 @@ func (grp *GrpAllocator) allocateGroupAt(location string,
 			foundNext = false
 			reasonsNext = append(reasonsNext, reasonsScore...)
 		} else {
-			klog.V(4).Infof("group %v available score %f", location, grp.Score)
+			utils.Logf(4, "group %v available score %f", location, grp.Score)
 		}
 	}
 
@@ -329,14 +329,14 @@ func (grp *GrpAllocator) allocateGroup() (bool, []sctypes.PredicateFailureReason
 
 	// go over all possible places to allocate
 	sortedGrpAllocResourceKeys := utils.SortedStringKeys(grp.GrpAllocResource)
-	klog.V(7).Infof("All available resources locations: %v", sortedGrpAllocResourceKeys)
+	utils.Logf(7, "All available resources locations: %v", sortedGrpAllocResourceKeys)
 	for _, grpsAllocResKey := range sortedGrpAllocResourceKeys {
 		grpCheck := grp.cloneGroup()
 		found, reasons := grpCheck.allocateGroupAt(grpsAllocResKey, subgrpsReq)
 		allocLocationName := grp.AllocBaseGroupPrefix + "/" + grpsAllocResKey
 
 		if found {
-			klog.V(5).Infof("For resource %v - available at %v with score - %v",
+			utils.Logf(5, "For resource %v - available at %v with score - %v",
 				grp.ReqBaseGroupName, allocLocationName, grpCheck.Score)
 			takeNew := false
 			if !grp.PreferUsed {
@@ -365,7 +365,7 @@ func (grp *GrpAllocator) allocateGroup() (bool, []sctypes.PredicateFailureReason
 				maxGroupName = allocLocationName
 			}
 		} else {
-			klog.V(5).Infof("For resource %v - not available at %v with score - %v",
+			utils.Logf(5, "For resource %v - not available at %v with score - %v",
 				grp.ReqBaseGroupName, allocLocationName, grpCheck.Score)
 		}
 
@@ -465,11 +465,11 @@ func containerFitsGroupConstraints(contName string, contReq *types.ContainerInfo
 			contReq.AllocateFrom = make(types.ResourceLocation)
 			for allocatedKey, allocatedLocVal := range grp.AllocateFrom {
 				contReq.AllocateFrom[types.ResourceName(allocatedKey)] = types.ResourceName(allocatedLocVal)
-				klog.V(3).Infof("Set allocate from %v to %v", allocatedKey, allocatedLocVal)
+				utils.Logf(3, "Set allocate from %v to %v", allocatedKey, allocatedLocVal)
 			}
 		}
 	} else {
-		klog.V(5).Infof("Performing only find and score -- allocatefrom already set")
+		utils.Logf(5, "Performing only find and score -- allocatefrom already set")
 		// set grp allocate from
 		grp.AllocateFrom = make(map[string]string)
 		for key, val := range contReq.AllocateFrom {
@@ -488,7 +488,7 @@ func containerFitsGroupConstraints(contName string, contReq *types.ContainerInfo
 }
 
 func initNodeResource(n *types.NodeInfo) map[string]int64 {
-	klog.V(5).Infof("Used resource %v", n.Used)
+	utils.Logf(5, "Used resource %v", n.Used)
 	nodeResource := make(map[string]int64)
 	for resKey, resVal := range n.Used {
 		nodeResource[string(resKey)] = resVal
@@ -617,7 +617,7 @@ func ComputePodGroupResources(n *types.NodeInfo, spec *types.PodInfo, bRemovePod
 		}
 	}
 
-	klog.V(5).Infof("PodGroupResourcesComputes: podResources: %v updateUsedByNode: %v removePod: %v", podResources, updatedUsedByNode, bRemovePod)
+	utils.Logf(5, "PodGroupResourcesComputes: podResources: %v updateUsedByNode: %v removePod: %v", podResources, updatedUsedByNode, bRemovePod)
 
 	return podResources, updatedUsedByNode
 }
