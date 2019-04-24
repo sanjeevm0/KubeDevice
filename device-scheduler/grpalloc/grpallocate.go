@@ -563,6 +563,7 @@ func PodFitsGroupConstraints(n *types.NodeInfo, spec *types.PodInfo, allocating 
 		nodeResource = grp.NodeResource
 	}
 
+	utils.Logf(4, "Found: %v Fails: %v totalScore: %v", found, predicateFails, totalScore)
 	utils.Logf(4, "Used %v", usedGroups)
 
 	return found, predicateFails, totalScore

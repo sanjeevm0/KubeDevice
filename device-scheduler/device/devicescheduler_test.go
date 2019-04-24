@@ -298,9 +298,9 @@ func testPodResourceUsage(t *testing.T, pod *types.PodInfo, nodeInfo *types.Node
 }
 
 func testPodAllocs(t *testing.T, ds *DevicesScheduler, pod *types.PodInfo, podEx *PodEx, nodeInfo *types.NodeInfo, testCnt int) {
-	fmt.Printf("=====TESTING CNT %d======\n", testCnt)
-	fmt.Printf("Node: %v\n", nodeInfo)
-	fmt.Printf("Pod: %v\n", pod)
+	//fmt.Printf("=====TESTING CNT %d======\n", testCnt)
+	//fmt.Printf("Node: %v\n", nodeInfo)
+	//fmt.Printf("Pod: %v\n", pod)
 	found, _, score := ds.PodFitsResources(pod, nodeInfo, true)
 	if found {
 		if podEx.rcont[0].expectedGrpLoc == nil {
@@ -622,8 +622,8 @@ func TestNoTopo(t *testing.T) {
 	p1, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
 
 	fits, failures, score := ds.PodFitsResources(p1, n1, false)
-	fmt.Printf("Fit: %v Failures: %v Score: %v", fits, failures, score)
+	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
 
 	fits, failures, score = ds.PodFitsResources(p1, n1, false)
-	fmt.Printf("Fit: %v Failures: %v Score: %v", fits, failures, score)
+	fmt.Printf("Fit: %v Failures: %v Score: %v\n", fits, failures, score)
 }

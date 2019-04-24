@@ -1,7 +1,6 @@
 package device
 
 import (
-	"fmt"
 	"plugin"
 
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
@@ -98,7 +97,8 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 	var totalReasons []sctypes.PredicateFailureReason
 	for i, d := range ds.Devices {
 		fit, reasons, score := d.PodFitsDevice(nodeInfo, podInfo, fillAllocateFrom)
-		fmt.Printf("I: %v Score: %v\n", i, score)
+		utils.Logf(4, "Device: %v Fit: %v Reasons: %v Score: %v", i, fit, reasons, score)
+		//fmt.Printf("I: %v Score: %v\n", i, score)
 		// could early terminate - but score will not be correct then
 		totalScore += score
 		totalFit = totalFit && fit
