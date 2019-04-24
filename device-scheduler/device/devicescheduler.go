@@ -1,7 +1,6 @@
 package device
 
 import (
-	"fmt"
 	"plugin"
 
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
@@ -80,9 +79,9 @@ func (ds *DevicesScheduler) AddDevicesSchedulerFromPlugins(pluginNames []string)
 
 // AddNode adds node reources to devices scheduler
 func (ds *DevicesScheduler) AddNode(nodeName string, nodeInfo *types.NodeInfo) {
-	fmt.Printf("AddNodeDevices: %v\n", ds.Devices)
+	//fmt.Printf("AddNodeDevices: %v\n", ds.Devices)
 	for _, d := range ds.Devices {
-		utils.Logf(3, "AddNode: %v", d.GetName())
+		utils.Logf(3, "Node: %v AddDevice: %v", nodeName, d.GetName())
 		d.AddNode(nodeName, nodeInfo)
 	}
 }
