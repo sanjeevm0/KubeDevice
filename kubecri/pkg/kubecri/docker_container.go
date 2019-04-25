@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Microsoft/KubeDevice/crishim/pkg/device"
-	"github.com/Microsoft/KubeDevice/crishim/pkg/kubeadvertise"
+	"github.com/Microsoft/KubeDevice/kubecri/pkg/device"
+	"github.com/Microsoft/KubeDevice/kubecri/pkg/kubeadvertise"
 	"github.com/Microsoft/KubeDevice/kubeinterface"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
@@ -148,12 +148,12 @@ func DockerExtInit(f *options.KubeletFlags, c *kubeletconfig.KubeletConfiguratio
 	}
 
 	// if !r.RedirectContainerStreaming, then proxy commands to docker service
-	//      client->APIServer->kubelet->crishim_shim->crishim(dockerservice)
+	//      client->APIServer->kubelet->kubecri_shim->kubecri(dockerservice)
 	// client->APIServer->kubelet is already TLS (i.e. secure), but overhead (traversing many components)
 	// else if r.ReirectContainerStreaming, then upon connection,
-	//      client->APIServer->kublet->crishim_shim->crishim(dockerservice) gives redirect
-	// client->crishim(dockerservice) - go directly to streaming server, streaming server should use TLS, then it is secure
-	// client->APIServer is with TLS, APIServer->kubelet is TLS, kubelet->crishim_shim is localhost REST, crishim_shim->crishim is linux socket
+	//      client->APIServer->kublet->kubecri_shim->kubecri(dockerservice) gives redirect
+	// client->kubecri(dockerservice) - go directly to streaming server, streaming server should use TLS, then it is secure
+	// client->APIServer is with TLS, APIServer->kubelet is TLS, kubelet->kubecri_shim is localhost REST, kubecri_shim->kubecri is linux socket
 	ds, err := dockershim.NewDockerService(dockerClientConfig, r.PodSandboxImage, streamingConfig, &pluginSettings,
 		f.RuntimeCgroups, c.CgroupDriver, r.DockershimRootDirectory, !r.RedirectContainerStreaming)
 

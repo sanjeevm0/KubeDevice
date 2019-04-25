@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
-	"github.com/Microsoft/KubeDevice/crishim/pkg/device"
+	"github.com/Microsoft/KubeDevice/kubecri/pkg/device"
 	"github.com/Microsoft/KubeDevice/kubeinterface"
 
 	kubev1 "k8s.io/api/core/v1"
