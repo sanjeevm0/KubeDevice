@@ -123,6 +123,8 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 	} else {
 		ds.score[podInfo.Name][nodeInfo.Name] = 0.0
 	}
+	utils.Logf(4, "Device PodFitsResources on node %v: Fit: %v Reasons: %v Score: %v",
+		nodeInfo.Name, totalFit, totalReasons, totalScore)
 	return totalFit, totalReasons, totalScore
 }
 
