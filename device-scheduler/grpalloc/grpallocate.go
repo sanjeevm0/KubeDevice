@@ -467,7 +467,7 @@ func containerFitsGroupConstraints(contName string, contReq *types.ContainerInfo
 				utils.Logf(3, "Set allocate from %v to %v", allocatedKey, allocatedLocVal)
 			}
 		}
-	} else {
+	} else if len(req) > 0 {
 		utils.Logf(5, "Performing only find and score -- allocatefrom already set")
 		// set grp allocate from
 		grp.AllocateFrom = make(map[string]string)
@@ -476,6 +476,12 @@ func containerFitsGroupConstraints(contName string, contReq *types.ContainerInfo
 		}
 		found, reasons = grp.findScoreAndUpdate(grpName)
 		score = grp.Score
+	} else {
+		// len(req) == 0
+		utils.Logf(5, "No group requests")
+		grp.AllocateFrom = make(map[string]string)
+		found = true
+		score = 0.0
 	}
 
 	utils.Logf(2, "Allocated %v", grp.AllocateFrom)
