@@ -15,13 +15,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Microsoft/KubeDevice-API/pkg/kdlog"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
 	"github.com/Microsoft/KubeDevice-API/pkg/utils"
 	"github.com/Microsoft/KubeDevice/device-scheduler/grpalloc"
 	"github.com/Microsoft/KubeDevice/kubeinterface"
 	"github.com/Microsoft/KubeGPU/gpuplugintypes"
 	"github.com/Microsoft/KubeGPU/gpuschedulerplugin"
-	"github.com/golang/glog"
 	kubev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -170,7 +170,7 @@ func setExpectedResources(c *cont) {
 func createPod(name string, expScore float64, iconts []cont, rconts []cont) (*types.PodInfo, *PodEx) {
 	pod := types.PodInfo{Name: name, InitContainers: make(map[string]types.ContainerInfo), RunningContainers: make(map[string]types.ContainerInfo)}
 
-	glog.V(2).Infof("Working on pod %s", pod.Name)
+	kdlog.V(2).Infof("Working on pod %s", pod.Name)
 
 	for index, icont := range iconts {
 		setExpectedResources(&iconts[index])
@@ -561,7 +561,7 @@ func TestGrpAllocate1(t *testing.T) {
 
 	fmt.Printf("======\nGroup allocate test complete\n========\n")
 
-	glog.Flush()
+	kdlog.Flush()
 }
 
 // test using scheduler for simple scoring (no topology)
@@ -651,5 +651,5 @@ func TestNoTopo(t *testing.T) {
 	pri2 := ds.PodPriority(p1, n2)
 	fmt.Printf("PodPriority2: %v\n", pri2)
 
-	glog.Flush()
+	kdlog.Flush()
 }
