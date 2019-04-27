@@ -624,7 +624,7 @@ func TestNoTopo(t *testing.T) {
 	n2, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo2, nil)
 	ds.AddNode(nodeInfo1.ObjectMeta.Name, n1)
 	ds.AddNode(nodeInfo2.ObjectMeta.Name, n2)
-	fmt.Printf("Node: +%v\n", n1)
+	fmt.Printf("Node: %+v\n", n1)
 	modReq := gpuschedulerplugin.TranslateGPUResources(n1.KubeAlloc[gpuplugintypes.ResourceGPU], types.ResourceList{
 		types.DeviceGroupPrefix + "/gpugrp1/A/gpugrp0/B/gpu/GPU0/cards": int64(1),
 	}, n1.Allocatable)
@@ -632,7 +632,7 @@ func TestNoTopo(t *testing.T) {
 		t.Errorf("Alloc not same, expect: %v, have: %v", n1.Allocatable, modReq)
 	}
 	n1.Allocatable = modReq
-	//fmt.Printf("Node: +%v\n", n1)
+	//fmt.Printf("Node: %+v\n", n1)
 
 	p1, _ := kubeinterface.KubePodInfoToPodInfo(kubePod, false)
 	fmt.Printf("Pod: %+v\n", p1)
