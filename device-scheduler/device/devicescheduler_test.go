@@ -8,7 +8,6 @@ package device
 import (
 	"bytes"
 	"encoding/gob"
-	"flag"
 	"fmt"
 	"math"
 	"reflect"
@@ -341,7 +340,7 @@ func TestGrpAllocate1(t *testing.T) {
 	//logs.InitLogs()
 
 	testCnt := 0
-	flag.Parse()
+	kdlog.InitLogs()
 
 	// allocatable resources
 	nodeInfo, nodeArgs := createNode("node1",
@@ -561,12 +560,12 @@ func TestGrpAllocate1(t *testing.T) {
 
 	fmt.Printf("======\nGroup allocate test complete\n========\n")
 
-	kdlog.Flush()
+	kdlog.FlushLogs()
 }
 
 // test using scheduler for simple scoring (no topology)
 func TestNoTopo(t *testing.T) {
-	flag.Parse()
+	kdlog.InitLogs()
 
 	kubePod := &kubev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -651,5 +650,5 @@ func TestNoTopo(t *testing.T) {
 	pri2 := ds.PodPriority(p1, n2)
 	fmt.Printf("PodPriority2: %v\n", pri2)
 
-	kdlog.Flush()
+	kdlog.FlushLogs()
 }
