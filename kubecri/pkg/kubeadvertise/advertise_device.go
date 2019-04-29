@@ -15,6 +15,7 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/cmd/kubelet/app/options"
 	nodeutil "k8s.io/kubernetes/pkg/util/node"
 )
