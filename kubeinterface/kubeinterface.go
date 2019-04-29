@@ -173,6 +173,16 @@ func PatchNodeMetadata(c v1core.CoreV1Interface, nodeName string, oldNode *kubev
 		klog.Errorf(errStr)
 		return nil, fmt.Errorf(errStr)
 	}
+	klog.V(5).Infof("UpdatedNode1: %+v", updatedNode)
+	// also patch the status
+	updatedNode, err = c.Nodes().Patch(nodeName, kubetypes.StrategicMergePatchType, patchBytes, "status")
+	if err != nil {
+		errStr := fmt.Sprintf("failed to patch status %q for node %q: %v", patchBytes, nodeName, err)
+		klog.Errorf(errStr)
+		return nil, fmt.Errorf(errStr)
+	}
+	klog.V(5).Infof("UpdatedNode2: %+v", updatedNode)
+
 	return updatedNode, nil
 }
 
