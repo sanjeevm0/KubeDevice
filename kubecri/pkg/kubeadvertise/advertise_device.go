@@ -64,6 +64,7 @@ func (da *DeviceAdvertiser) patchResources() error {
 	for key, val := range nodeInfo.KubeAlloc {
 		newNode.Status.Allocatable[kubev1.ResourceName(key)] = *resource.NewQuantity(val, resource.DecimalSI)
 	}
+	klog.V(5).Infof("NewNode After Patch: %+v", newNode)
 
 	// Patch the current status on the API server
 	_, err = kubeinterface.PatchNodeMetadata(da.KubeClient.CoreV1(), da.nodeName, node, newNode)
