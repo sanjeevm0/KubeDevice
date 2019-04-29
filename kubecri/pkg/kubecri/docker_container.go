@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/Microsoft/KubeDevice/kubecri/pkg/device"
@@ -126,25 +127,28 @@ func DockerExtInit(f *options.KubeletFlags, c *kubeletconfig.KubeletConfiguratio
 	}
 
 	// Initialize streaming configuration.
-	// Initialize TLS
-	tlsOptions, err := kubeletapp.InitializeTLS(f, c)
-	if err != nil {
-		return err
-	}
-	ipName, nodeName, err := kubeadvertise.GetHostName(f)
-	klog.V(2).Infof("Using ipname %v nodeName %v", ipName, nodeName)
-	if err != nil {
-		return err
-	}
 	streamingConfig := &streaming.Config{
-		Addr:                            fmt.Sprintf("%s:%d", ipName, c.Port),
 		StreamIdleTimeout:               c.StreamingConnectionIdleTimeout.Duration,
 		StreamCreationTimeout:           streaming.DefaultConfig.StreamCreationTimeout,
 		SupportedRemoteCommandProtocols: streaming.DefaultConfig.SupportedRemoteCommandProtocols,
 		SupportedPortForwardProtocols:   streaming.DefaultConfig.SupportedPortForwardProtocols,
 	}
-	if tlsOptions != nil {
+
+	// Initialize TLS - only needed for streaming redirect, streaming redirect needs open IP on worker nodes
+	tlsOptions, err := kubeletapp.InitializeTLS(f, c)
+	if err != nil {
+		return err
+	}
+	if r.RedirectContainerStreaming {
+		ipName, nodeName, err := kubeadvertise.GetHostName(f)
+		klog.V(2).Infof("Using ipname %v nodeName %v", ipName, nodeName)
+		if err != nil {
+			return err
+		}
+		streamingConfig.Addr = fmt.Sprintf("%s:%d", ipName, c.Port)
 		streamingConfig.TLSConfig = tlsOptions.Config
+	} else {
+		streamingConfig.BaseURL = &url.URL{Path: "/cri/"}
 	}
 
 	// if !r.RedirectContainerStreaming, then proxy commands to docker service
@@ -156,13 +160,11 @@ func DockerExtInit(f *options.KubeletFlags, c *kubeletconfig.KubeletConfiguratio
 	// client->APIServer is with TLS, APIServer->kubelet is TLS, kubelet->kubecri_shim is localhost REST, kubecri_shim->kubecri is linux socket
 	ds, err := dockershim.NewDockerService(dockerClientConfig, r.PodSandboxImage, streamingConfig, &pluginSettings,
 		f.RuntimeCgroups, c.CgroupDriver, r.DockershimRootDirectory, !r.RedirectContainerStreaming)
-
 	if err != nil {
 		return err
 	}
 
 	dsExt := &dockerExtService{DockerService: ds, kubeclient: client, devmgr: dev}
-
 	if err := dsExt.Start(); err != nil {
 		return err
 	}
@@ -184,15 +186,14 @@ func DockerExtInit(f *options.KubeletFlags, c *kubeletconfig.KubeletConfiguratio
 		if tlsOptions != nil {
 			// this will listen forever
 			return s.ListenAndServeTLS(tlsOptions.CertFile, tlsOptions.KeyFile)
-		} else {
-			return s.ListenAndServe()
 		}
-	} else {
-		var stop = make(chan struct{})
-		<-stop // wait forever
-		close(stop)
-		return nil
+		return s.ListenAndServe()
 	}
+
+	var stop = make(chan struct{})
+	<-stop // wait forever
+	close(stop)
+	return nil
 }
 
 // func RunDockershim(f *options.KubeletFlags, c *kubeletconfiginternal.KubeletConfiguration, stopCh <-chan struct{}) error {
