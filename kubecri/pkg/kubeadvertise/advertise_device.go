@@ -65,6 +65,9 @@ func (da *DeviceAdvertiser) patchResources() error {
 	for key, val := range nodeInfo.KubeAlloc {
 		newNode.Status.Allocatable[kubev1.ResourceName(key)] = *resource.NewQuantity(val, resource.DecimalSI)
 	}
+	newNode.Status.Capacity[kubev1.ResourceName("testpatch")] = *resource.NewQuantity(10, resource.DecimalSI)
+	newNode.Status.Allocatable[kubev1.ResourceName("testpatch")] = *resource.NewQuantity(10, resource.DecimalSI)
+	klog.V(5).Infof("OldNode Before Patch: %+v", oldNode)
 	klog.V(5).Infof("NewNode After Patch: %+v", newNode)
 
 	// Patch the current status on the API server
