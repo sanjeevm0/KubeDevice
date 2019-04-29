@@ -51,7 +51,7 @@ func (d *DevicesManager) AddDevicesFromPlugins(pluginNames []string) {
 		if err == nil {
 			f, err := p.Lookup("CreateDevicePlugin")
 			if err == nil {
-				err, d := f.(func() (error, devtypes.Device))()
+				d, err := f.(func() (devtypes.Device, error))()
 				if err == nil {
 					device = d
 					err = device.New()
