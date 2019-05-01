@@ -2,6 +2,7 @@ package device
 
 import (
 	"plugin"
+	"sync"
 
 	sctypes "github.com/Microsoft/KubeDevice-API/pkg/devicescheduler"
 	"github.com/Microsoft/KubeDevice-API/pkg/types"
@@ -14,6 +15,7 @@ import (
 // }
 
 type DevicesScheduler struct {
+	sync.Mutex
 	Devices           []sctypes.DeviceScheduler
 	hasGroupScheduler bool
 	score             map[string]map[string]float64
@@ -114,6 +116,8 @@ func (ds *DevicesScheduler) PodFitsResources(podInfo *types.PodInfo, nodeInfo *t
 		totalFit = totalFit && fit
 		totalReasons = append(totalReasons, reasons...)
 	}
+	ds.Lock()
+	defer ds.Unlock()
 	utils.AssignMap(ds.score, []string{podInfo.Name, nodeInfo.Name}, 0.0)
 	if totalFit {
 		ds.score[podInfo.Name][nodeInfo.Name] = totalScore
