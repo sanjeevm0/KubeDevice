@@ -57,7 +57,7 @@ func (ds *DevicesScheduler) AddDevicesSchedulerFromPlugins(pluginNames []string)
 		if err == nil {
 			f, err := p.Lookup("CreateDeviceSchedulerPlugin")
 			if err == nil {
-				err, d := f.(func() (error, sctypes.DeviceScheduler))()
+				d, err := f.(func() (sctypes.DeviceScheduler, error))()
 				if err == nil {
 					device = d
 				} else {
