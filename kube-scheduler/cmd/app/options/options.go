@@ -151,6 +151,8 @@ func (o *Options) Flags() (nfs cliflag.NamedFlagSets) {
 	fs.StringVar(&o.WriteConfigTo, "write-config-to", o.WriteConfigTo, "If set, write the configuration values to this file and exit.")
 	fs.StringVar(&o.Master, "master", o.Master, "The address of the Kubernetes API server (overrides any value in kubeconfig)")
 
+	fs.StringVar(&o.DeviceSchedulerPluginsPath, "devschedpath", o.DeviceSchedulerPluginsPath, "The path where device scheduler plugins are located")
+
 	o.SecureServing.AddFlags(nfs.FlagSet("secure serving"))
 	o.CombinedInsecureServing.AddFlags(nfs.FlagSet("insecure serving"))
 	o.Authentication.AddFlags(nfs.FlagSet("authentication"))
