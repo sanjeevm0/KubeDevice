@@ -69,6 +69,9 @@ type Options struct {
 	WriteConfigTo string
 
 	Master string
+
+	// Path to device scheduler plugins
+	DeviceSchedulerPluginsPath string
 }
 
 // NewOptions returns default scheduler app options.
@@ -113,6 +116,8 @@ func NewOptions() (*Options, error) {
 	o.SecureServing.ServerCert.CertDirectory = ""
 	o.SecureServing.ServerCert.PairName = "kube-scheduler"
 	o.SecureServing.BindPort = ports.KubeSchedulerPort
+
+	o.DeviceSchedulerPluginsPath = "/schedulerplugins"
 
 	return o, nil
 }

@@ -21,10 +21,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	goruntime "runtime"
 
+	"github.com/Microsoft/KubeDevice/device-scheduler/device"
 	schedulerserverconfig "github.com/Microsoft/KubeDevice/kube-scheduler/cmd/app/config"
 	"github.com/Microsoft/KubeDevice/kube-scheduler/cmd/app/options"
 	"github.com/Microsoft/KubeDevice/kube-scheduler/pkg"
@@ -89,6 +92,9 @@ through the API as necessary.`,
 		fs.AddFlagSet(f)
 	}
 
+	fs.StringVar(&opts.DeviceSchedulerPluginsPath, "devschedpath", opts.DeviceSchedulerPluginsPath,
+		"The path where device scheduler plugins are located")
+
 	usageFmt := "Usage:\n  %s\n"
 	cols, _, _ := term.TerminalSize(cmd.OutOrStdout())
 	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
@@ -144,6 +150,18 @@ func runCommand(cmd *cobra.Command, args []string, opts *options.Options) error 
 	// Apply algorithms based on feature gates.
 	// TODO: make configurable?
 	algorithmprovider.ApplyFeatureGates()
+
+	// add the device schedulers
+	var deviceSchedulerPlugins []string
+	pluginPath := opts.DeviceSchedulerPluginsPath
+	devPlugins, err := ioutil.ReadDir(pluginPath)
+	if err != nil {
+		klog.Errorf("Cannot read plugins - skipping")
+	}
+	for _, pluginFile := range devPlugins {
+		deviceSchedulerPlugins = append(deviceSchedulerPlugins, path.Join(pluginPath, pluginFile.Name()))
+	}
+	device.DeviceScheduler.AddDevicesSchedulerFromPlugins(deviceSchedulerPlugins)
 
 	// Configz registration.
 	if cz, err := configz.New("componentconfig"); err == nil {
