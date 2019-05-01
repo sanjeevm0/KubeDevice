@@ -92,9 +92,6 @@ through the API as necessary.`,
 		fs.AddFlagSet(f)
 	}
 
-	fs.StringVar(&opts.DeviceSchedulerPluginsPath, "devschedpath", opts.DeviceSchedulerPluginsPath,
-		"The path where device scheduler plugins are located")
-
 	usageFmt := "Usage:\n  %s\n"
 	cols, _, _ := term.TerminalSize(cmd.OutOrStdout())
 	cmd.SetUsageFunc(func(cmd *cobra.Command) error {
