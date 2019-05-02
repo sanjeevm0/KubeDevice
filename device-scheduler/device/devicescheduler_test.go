@@ -613,6 +613,25 @@ func TestNoTopo(t *testing.T) {
 			},
 		},
 	}
+	nodeInfo3 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node2",
+		},
+		Status: kubev1.NodeStatus{
+			Capacity: kubev1.ResourceList{
+				kubev1.ResourceName(gpuplugintypes.ResourceGPU): *resource.NewQuantity(0, resource.DecimalSI),
+			},
+			Allocatable: kubev1.ResourceList{
+				kubev1.ResourceName(gpuplugintypes.ResourceGPU): *resource.NewQuantity(0, resource.DecimalSI),
+			},
+		},
+	}
+	nodeInfo4 := &kubev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "Node3",
+		},
+		Status: kubev1.NodeStatus{},
+	}
 
 	ds := DeviceScheduler
 	ds.RemoveAll()
@@ -621,8 +640,12 @@ func TestNoTopo(t *testing.T) {
 
 	n1, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo1, nil)
 	n2, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo2, nil)
+	n3, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo3, nil)
+	n4, _ := kubeinterface.KubeNodeToNodeInfo(nodeInfo4, nil)
 	ds.AddNode(nodeInfo1.ObjectMeta.Name, n1)
 	ds.AddNode(nodeInfo2.ObjectMeta.Name, n2)
+	ds.AddNode(nodeInfo3.ObjectMeta.Name, n3)
+	ds.AddNode(nodeInfo4.ObjectMeta.Name, n4)
 	fmt.Printf("Node: %+v\n", n1)
 	modReq := gpuschedulerplugin.TranslateGPUResources(n1.KubeAlloc[gpuplugintypes.ResourceGPU], types.ResourceList{
 		types.DeviceGroupPrefix + "/gpugrp1/A/gpugrp0/B/gpu/GPU0/cards": int64(1),
